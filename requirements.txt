@@ -1,5 +1,6 @@
 phys2bids
-neurokit
-glob
+neurokit2
 pandas
 numpy
+pprintpp
+bids

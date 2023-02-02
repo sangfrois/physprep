@@ -5,11 +5,10 @@ The repo provides a setp-by-step tutorial to:
 
 1. load BIOPAC sourcedata from the cloud;
 2. match physio and neuro acquisition sessions;
-3. log every file from one subject;
+3. log every file from one subject in a command line interface;
 4. generate metadata from every sourcedata physio files of this one subject;
 5. segment and convert files using phys2bids;
 6. rename raw files that were converted in step #5, and make sure they follow the BIDS structure;
-7. Process raw files to make BIDS-compliant derivatives 
 
 to-do:
 - [ ] link OSF storage and write a script to load the data locally
