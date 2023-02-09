@@ -12,7 +12,7 @@ import sys
 LGR = logging.getLogger(__name__)
 
 
-def list_sub(root=None, sub=None, ses=None, type=".acq", save=False, show=False):
+def list_sub(root, sub, ses=None, type=".acq", save=False, show=False):
     """
     List a subject's files.
 
