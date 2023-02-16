@@ -12,7 +12,7 @@ import sys
 LGR = logging.getLogger(__name__)
 
 
-def list_sub(root=None, sub=None, ses=None, type=".acq", save=False, show=False):
+def list_sub(root, sub, ses=None, type=".acq", save=False, show=False):
     """
     List a subject's files.
 
@@ -43,14 +43,15 @@ def list_sub(root=None, sub=None, ses=None, type=".acq", save=False, show=False)
     >>> ses_runs = list_sub(root = "/home/user/dataset/", sub = "sub-01")
     """
     # Check the subject's
-    if os.path.isdir(os.path.join(root, sub)) is False:
+    path_sub = os.path.join(root, sub)
+    if os.path.isdir(path_sub) is False:
         raise ValueError("Couldn't find the subject's path \n", os.path.join(root, sub))
     file_list = []
     ses_runs = {}
-    ses_list = os.listdir(f"{root}{sub}")
+    ses_list = os.listdir(path_sub)
     # list files in only one session
     if ses is not None:
-        dir = f"{root}{sub}/{ses}"
+        dir = os.path.join(path_sub, ses)
         # if the path exists, list .acq files
         if os.path.exists(dir):
             for filename in os.listdir(dir):
@@ -69,14 +70,14 @@ def list_sub(root=None, sub=None, ses=None, type=".acq", save=False, show=False)
             raise Exception("Session path you gave does not exist")
 
     # list files in all sessions (or here, exp for experiments)
-    elif os.path.isdir(f"{root}{sub}/{ses_list[0]}") is True:
+    elif os.path.isdir(os.path.join(path_sub, ses_list[0])) is True:
         for exp in ses_list:
             if exp.endswith(".json"):
                 continue
             # re-initialize the list
             file_list = []
             # iterate through directory's content
-            for filename in os.listdir(f"{root}{sub}/{exp}"):
+            for filename in os.listdir(os.path.join(path_sub, exp)):
 
                 if filename.endswith(type):
                     file_list += [filename]
@@ -91,7 +92,7 @@ def list_sub(root=None, sub=None, ses=None, type=".acq", save=False, show=False)
     # list files in a sub directory without sessions
     else:
         # push filenames in a list
-        for filename in os.listdir(os.path.join(root, sub)):
+        for filename in os.listdir(path_sub):
             if filename.endswith(type):
                 file_list += [filename]
         # store list

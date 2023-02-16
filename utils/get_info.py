@@ -3,6 +3,7 @@
 """another util for neuromod phys data conversion."""
 import pprintpp
 import glob
+import math
 import sys
 from list_sub import list_sub
 import json
@@ -14,7 +15,7 @@ from neurokit2 import read_acqknowledge
 LGR = logging.getLogger(__name__)
 
 
-def volume_counter(root, subject, ses=None):
+def volume_counter(root, subject, ses=None, tr=1.49):
     """
     Volume counting for each run in a session.
 
@@ -28,6 +29,8 @@ def volume_counter(root, subject, ses=None):
     ses : string
         name of acquisition session. Optional workflow for specific experiment
         default is None
+    tr : float
+	value of the TR used in the MRI sequence
     Returns:
     --------
     ses_runs: dictionary
@@ -63,8 +66,8 @@ def volume_counter(root, subject, ses=None):
             # memory expensive to play with than dataframe
             session = list(query_df.index)
 
-            # maximal TR - the time (2s) distance between two adjacent TTL
-            tr_period = fs * 2
+            # maximal TR - the time distance between two adjacent TTL, now given by the ceiling value of the tr (but might be tweaked if needed)
+            tr_period = fs * math.ceil(tr)
 
             # Define session length and adjust with padding
             start = int(session[0])
@@ -87,7 +90,7 @@ def volume_counter(root, subject, ses=None):
                     # parse start is end of run
                     parse_list += [(parse_start, parse_end)]
             if len(parse_list) == 0:
-                runs = round((end - start) / fs / 1.49 + 1)
+                runs = round((end - start) / fs / tr + 1)
                 if exp not in ses_runs:
                     ses_runs[exp] = [runs]
                 else:
@@ -110,7 +113,7 @@ def volume_counter(root, subject, ses=None):
 
             # compute the number of trigger/volumes in the run
             for i in range(0, len(runs)):
-                runs[i] = round(((runs[i][1] - runs[i][0]) / fs) / 1.49) + 1
+                runs[i] = round(((runs[i][1] - runs[i][0]) / fs) / tr) + 1
             if exp not in ses_runs:
                 ses_runs[exp] = [runs]
             else:
@@ -158,9 +161,9 @@ def get_info(
     """
     # list matches for a whole subject's dir
     ses_runs_matches = list_sub(
-        f"{root}sourcedata/physio/", sub, ses, type=".tsv", show=show
+        os.path.join(root,"sourcedata/physio/"), sub, ses, type=".tsv", show=show
     )
-    ses_info = list_sub(f"{root}sourcedata/physio/", sub, ses, type=".acq")
+    ses_info = list_sub(os.path.join(root, "sourcedata/physio/"), sub, ses, type=".acq")
 
     # go to fmri matches and get entries for each run of a session
     nb_expected_runs = {}
@@ -174,6 +177,7 @@ def get_info(
         tasks = []
         matches = glob.glob(f"{root}{sub}/{exp}/func/*bold.json")
         matches.sort()
+        print(matches)
         # iterate through _bold.json
         for idx, filename in enumerate(matches):
             task = filename.rfind(f"{exp}_") + 8
@@ -187,6 +191,8 @@ def get_info(
             nb_expected_volumes_run[f"{idx+1:02d}"] = bold["time"]["samples"][
                 "AcquisitionNumber"
             ][-1]
+            # we want to have the TR in a _bold.json to later use it in the volume_counter function
+            tr = bold["RepetitionTime"]
 
         # print the thing to show progress
         print(nb_expected_volumes_run)
@@ -210,7 +216,7 @@ def get_info(
             try:
                 # do not count the triggers in phys file if no physfile
                 if (
-                    os.path.isfile(f"{root}sourcedata/physio/{sub}/{exp}/{name[0]}")
+                    os.path.isfile(os.path.join(root,"sourcedata/physio",sub,exp,name[0]))
                     is False
                 ):
                     print(
@@ -221,7 +227,7 @@ def get_info(
                     # count the triggers in physfile otherwise
                     try:
                         vol_in_biopac = volume_counter(
-                            f"{root}sourcedata/physio/", sub, ses=exp
+                            os.path.join(root, "sourcedata/physio/"), sub, ses=exp, tr=tr
                         )
                         print("finished counting volumes in physio file for:", exp)
 
