@@ -129,8 +129,23 @@ def volume_counter(root, sub, ses=None, tr=1.49):
 
     return ses_runs
 
-def get_acq_channels(source, acq_file):
-    read_acq = bioread.read_file(os.path.join(source, acq_file))
+def get_acq_channels(root, acq_file):
+    """
+    Get the names of the channels in the acq file 
+
+    Parameters:
+    ------------
+    root : path
+        directory containing the biopac data
+    acq_file : string
+        name of the acqknowledge file
+    
+    Returns:
+    --------
+    ch_name : list
+        list of the channel names in the same order as they are in the acq file
+    """
+    read_acq = bioread.read_file(os.path.join(root, acq_file))
     ch_name = []
     for ch in read_acq.channel_headers:
         if 'PPG' in ch.name:
