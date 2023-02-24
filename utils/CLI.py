@@ -3,7 +3,6 @@
 """Parser for utils."""
 import argparse
 
-
 def _get_parser():
     """
     Parse command line inputs for this function.
@@ -11,6 +10,7 @@ def _get_parser():
     Returns
     -------
     parser.parse_args() : argparse dict
+
     Notes
     -----
     # Argument parser follow template provided by RalphyZ.
@@ -78,6 +78,7 @@ def _get_parser2():
     Returns
     -------
     parser.parse_args() : argparse dict
+
     Notes
     -----
     # Argument parser follow template provided by RalphyZ.
@@ -132,6 +133,15 @@ def _get_parser2():
         dest="save",
         help="Specify if you want to save the dictionary",
         default=False,
+    )
+
+    optional.add_argument(
+        "-tr",
+        "--tr",
+        dest="tr",
+        help="Specify the tr value",
+        default=1.49,
+        type=float
     )
     parser._action_groups.append(optional)
 

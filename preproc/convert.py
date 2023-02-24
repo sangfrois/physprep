@@ -8,10 +8,18 @@ import sys
 import pandas as pd
 import gc
 import os
+import click
 
 import sys
 sys.path.append("../utils")
 from CLI import _get_parser
+
+@click.command()
+@click.argument("root", type=click.Path(exists=True))
+@click.argument("save", type=click.Path())
+@click.argument("sub", type=str)
+@click.argument("ses", type=str)
+@click.option("--tr", type=float)
 
 def neuromod_phys2bids(root, save, sub, ses=None, tr=1.49):
     """
@@ -37,21 +45,22 @@ def neuromod_phys2bids(root, save, sub, ses=None, tr=1.49):
     phys2bids output
     """
     # fetch info
-    info = pd.read_json(os.path.join(scratch, sub, f"{sub}_volumes_all-ses-runs.json"))
+    print(os.path.join(root, sub, f"{sub}_volumes_all-ses-runs.json"))
+    info = pd.read_json(os.path.join(root, sub, f"{sub}_volumes_all-ses-runs.json"))
     # define sessions
     if ses is None:
         ses = info.columns
     elif isinstance(ses, list) is False:
         ses = [ses]
     # Define ch_name
-        if ch_name is None:
-            print("Warning: you did not specify a value for ch_name, the values that will be use are the following: ")
-            ch_name = ["EDA", "PPG", "ECG", "TTL", "RSP"]
-            print(ch_name)
-            print("Please make sure, those values are the right ones !")
-            chtrig=4
-        else:
-            chtrig = ch_name.index('TTL')
+    if info[ses]['ch_name'] is None:
+        print("Warning: you did not specify a value for ch_name, the values that will be use are the following: ")
+        ch_name = ["EDA", "PPG", "ECG", "TTL", "RSP"]
+        print(ch_name)
+        print("Please make sure, those values are the right ones !")
+        chtrig=4
+    else:
+        chtrig = info[ses]['ch_name'].index('TTL')
 
     # iterate through info
     for col in ses:
@@ -140,9 +149,10 @@ def neuromod_phys2bids(root, save, sub, ses=None, tr=1.49):
 
 
 def _main(argv=None):
-    options = _get_parser().parse_args(argv)
-    neuromod_phys2bids(**vars(options))
-
+    #options = _get_parser().parse_args(argv)
+    #neuromod_phys2bids(**vars(options))
+    neuromod_phys2bids()
 
 if __name__ == "__main__":
-    _main(sys.argv[1:])
+    neuromod_phys2bids()
+    #_main(sys.argv[1:])
