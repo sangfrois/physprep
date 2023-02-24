@@ -1,10 +1,6 @@
 # -*- coding: utf-8 -*-
 # !/usr/bin/env python -W ignore::DeprecationWarning
 
-#root = '/scratch/mepicard/emotionvideos/'
-#save = '/scratch/mepicard/physio_data/emotionvideos/'
-#python get_info.py -indir '/scratch/mepicard/emotionvideos/' -sub 'sub-02' -ses 'ses-001' -save '/scratch/mepicard/physio_data/emotionvideos/'
-
 """another util for neuromod phys data conversion."""
 import pprintpp
 import glob
