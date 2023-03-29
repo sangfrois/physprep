@@ -102,9 +102,27 @@ def neuromod_bio_clean(tsv=None, data=None, h5=None, sampling_rate=1000):
 # =======================================================================
 
 def neuromod_ppg_clean(ppg_signal, sampling_rate=10000, method='nabian2018'):
+    """
+    Clean a PPG signal.
+
+    Prepare raw PPG signal for peak detection with specified method.
+
+    Parameters
+    ----------
+    ppg_signal : list, array or Series
+        The raw PPG channel.
+    sampling_rate : int
+        The sampling frequency of `ppg_signal` (in Hz, i.e., samples/second).
+        Defaults to 10000.
+    method : str
+        The processing pipeline to apply. Defaults to 'nabian2018'.
+    Returns
+    -------
+    ppg_cleaned : array
+        Vector containing the cleaned PPG signal.
+    """
     ppg_cleaned = nk.ppg_clean(ppg_signal, sampling_rate=sampling_rate,
                                method=method)
-
     return ppg_cleaned
 # ======================================================================
 # Electrocardiogram (ECG)
@@ -121,6 +139,8 @@ def neuromod_ecg_clean(ecg_signal, trigger_pulse,
     ----------
     ecg_signal : list, array or Series
         The raw ECG channel.
+    trigger_pulse : list, array or Series
+        Trigger channel.
     sampling_rate : int
         The sampling frequency of `ecg_signal` (in Hz, i.e., samples/second).
         Defaults to 10000.
@@ -130,7 +150,7 @@ def neuromod_ecg_clean(ecg_signal, trigger_pulse,
         Specify if the MRI sequence used was the multi-echo (True) or the singlue-echo (False). Defaults to False.
     Returns
     -------
-    array
+    clean : array
         Vector containing the cleaned ECG signal.
     """
     if me:
