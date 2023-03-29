@@ -245,6 +245,16 @@ def neuromod_eda_process():
     return
 
 def load_json(filename):
+    """
+    Parameters
+    -----------
+    filename : str
+        file path of the .json to load
+    Returns
+    -------
+    data : dict
+        dict with the content of the .json passed in argument
+    """
     tmp = open(filename)
     data = json.load(tmp)
     tmp.close()
@@ -253,6 +263,20 @@ def load_json(filename):
 
 def load_segmented_runs(source, sub, ses):
     """
+    Parameters
+    -----------
+    source : str
+        main directory contaning the segmented runs
+    sub : str
+        id of the subject
+    ses : str
+        id of the session
+    Returns
+    -------
+    data_tsv : list
+        list containing dataframes with the raw signal for each run
+    filenames : list
+        list contaning the filename for each segmented run without the extension
     """
     data_tsv, filenames = [], []
     files_tsv = [f for f in os.listdir(os.path.join(source, sub, ses)) if 'tsv.gz' in f]
@@ -282,6 +306,25 @@ def load_segmented_runs(source, sub, ses):
 @click.argument('save', type=bool)
 def process_ppg_data(source, sub, ses, outdir, save=True):
     """
+    Parameters
+    -----------
+    source : str
+        main directory contaning the segmented runs
+    sub : str
+        id of the subject
+    ses : str
+        id of the session
+    outdir : str
+        directory to save the outputs
+    save : bool
+        indicate if the outputs should be saved or not 
+        Default True
+    Returns
+    -------
+    signals :  DataFrame
+        Dataframe containing the signal cleaned and processed
+    info : dict
+        dictionnary containing the info of peaks and sampling rate
     """
     data_tsv, filenames_tsv = load_segmented_runs(source, sub, ses)
     for idx, d in enumerate(data_tsv):
@@ -304,6 +347,25 @@ def process_ppg_data(source, sub, ses, outdir, save=True):
 @click.argument('save', type=bool)
 def process_ecg_data(source, sub, ses, outdir, save=True):
     """
+    Parameters
+    -----------
+    source : str
+        main directory contaning the segmented runs
+    sub : str
+        id of the subject
+    ses : str
+        id of the session
+    outdir : str
+        directory to save the outputs
+    save : bool
+        indicate if the outputs should be saved or not 
+        Default True
+    Returns
+    -------
+    signals :  DataFrame
+        Dataframe containing the signal cleaned and processed
+    info : dict
+        dictionnary containing the info of peaks and sampling rate
     """
     data_tsv, filenames_tsv = load_segmented_runs(source, sub, ses)
     for idx, d in enumerate(data_tsv):
@@ -327,6 +389,23 @@ def process_ecg_data(source, sub, ses, outdir, save=True):
 @click.argument('save', type=bool)
 def process_rsp_data(source, sub, ses, outdir, save =True):
     """
+    Parameters
+    -----------
+    source : str
+        main directory contaning the segmented runs
+    sub : str
+        id of the subject
+    ses : str
+        id of the session
+    outdir : str
+        directory to save the outputs
+    save : bool
+        indicate if the outputs should be saved or not 
+        Default True
+    Returns
+    -------
+    signals : DataFrame
+        Dataframe containing the signal cleaned and processed
     """
     data_tsv, filenames_tsv = load_segmented_runs(source, sub, ses)
     for idx, d in enumerate(data_tsv):
@@ -346,8 +425,26 @@ def process_rsp_data(source, sub, ses, outdir, save =True):
 @click.argument('outdir', type=str)
 @click.argument('save', type=bool)
 def process_eda_data(source, sub, ses, outdir, save =True):
+    """
+    Parameters
+    -----------
+    source : str
+        main directory contaning the segmented runs
+    sub : str
+        id of the subject
+    ses : str
+        id of the session
+    outdir : str
+        directory to save the outputs
+    save : bool
+        indicate if the outputs should be saved or not 
+        Default True
+    Returns
+    -------
+    """
     #TO DO
     return
+
 
 if __name__ == "__main__":
     # PPG processing pipeline
