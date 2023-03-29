@@ -338,10 +338,23 @@ def process_rsp_data(source, sub, ses, outdir, save =True):
 
     return signals
 
+
+@click.command()
+@click.argument('source', type=str)
+@click.argument('sub', type=str)
+@click.argument('ses', type=str)
+@click.argument('outdir', type=str)
+@click.argument('save', type=bool)
+def process_eda_data(source, sub, ses, outdir, save =True):
+    #TO DO
+    return
+
 if __name__ == "__main__":
-    #PPG processing pipeline
+    # PPG processing pipeline
     process_ppg_data()
-    #ECG processing pipeline
+    # ECG processing pipeline
     process_ecg_data()
-    #RSP processing pipeline
+    # RSP processing pipeline
     process_rsp_data()
+    # EDA processing pipeline
+    # TO DO
