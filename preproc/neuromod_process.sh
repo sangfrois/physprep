@@ -13,6 +13,12 @@ do
         for i in $dir*/
         do
             SES=$(basename $i)
+            # neuromod_process.py takes in argument :
+            # 1. the path to source data
+            # 2. the subject id (folder name)
+            # 3. the ses id (folder name)
+            # 4. the path to save the outputs
+            # 5. Boolean to indicate wheter or not the outputs should be saved
             python neuromod_process.py $SOURCE $SUB $SES $OUTDIR True
         done
     fi
