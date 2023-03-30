@@ -442,7 +442,10 @@ def process_eda_data(source, sub, ses, outdir, save =True):
     Returns
     -------
     """
-    #TO DO
+    data_tsv, filenames_tsv = load_segmented_runs(source, sub, ses)
+    for idx, d in enumerate(data_tsv):
+        print(f"---Processing EDA signal for {sub} {ses}: run {filenames_tsv[idx][-2:]}---")
+        print('--Cleaning the signal---')
     return
 
 
