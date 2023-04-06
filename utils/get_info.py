@@ -125,6 +125,7 @@ def volume_counter(root, sub, ses=None, tr=1.49):
 
     return ses_runs
 
+
 def get_acq_channels(root, acq_file):
     """
     Get the names of the channels in the acq file 
@@ -144,28 +145,22 @@ def get_acq_channels(root, acq_file):
     read_acq = bioread.read_file(os.path.join(root, acq_file))
     ch_name = []
     for ch in read_acq.channel_headers:
-        if 'PPG' in ch.name:
-            ch_name.append('PPG')
-        elif 'ECG' in ch.name:
-            ch_name.append('ECG')
-        elif 'HLT' in ch.name:
-            ch_name.append('TTL')
-        elif 'DA100C' == ch.name:
-            ch_name.append('RSP')
-        elif 'EDA' in ch.name:
-            ch_name.append('EDA')
-    
+        if "PPG" in ch.name:
+            ch_name.append("PPG")
+        elif "ECG" in ch.name:
+            ch_name.append("ECG")
+        elif "HLT" in ch.name:
+            ch_name.append("TTL")
+        elif "DA100C" == ch.name:
+            ch_name.append("RSP")
+        elif "EDA" in ch.name:
+            ch_name.append("EDA")
+
     return ch_name
 
 
 def get_info(
-    root=None,
-    sub=None,
-    ses=None,
-    count_vol=False,
-    show=True,
-    save=None,
-    tr=None
+    root=None, sub=None, ses=None, count_vol=False, show=True, save=None, tr=None
 ):
     """
     Get all volumes taken for a sub.
@@ -200,22 +195,26 @@ def get_info(
     """
     # list matches for a whole subject's dir
     ses_runs_matches = list_sub(
-        os.path.join(root,"sourcedata/physio/"), sub, ses, type=".tsv", show=show
+        os.path.join(root, "sourcedata/physio/"), sub, ses, type=".tsv", show=show
     )
 
     # go to fmri matches and get entries for each run of a session
     nb_expected_runs = {}
 
     if not ses_runs_matches[ses]:
-        #If there is no tsv file matching the acq file and the nii.gz files in root
+        # If there is no tsv file matching the acq file and the nii.gz files in root
         run_dict = {}
         nb_expected_runs[ses] = {}
 
-        ses_acq_file = list_sub(os.path.join(root, "sourcedata/physio/"), sub, ses, type=".acq")
-        nb_expected_runs[ses]['in_file'] = ses_acq_file[ses][0]
+        ses_acq_file = list_sub(
+            os.path.join(root, "sourcedata/physio/"), sub, ses, type=".acq"
+        )
+        nb_expected_runs[ses]["in_file"] = ses_acq_file[ses][0]
 
-        ch_name = get_acq_channels(os.path.join(root, "sourcedata/physio/", sub, ses), ses_acq_file[ses][0])
-        nb_expected_runs[ses]['ch_name'] = ch_name
+        ch_name = get_acq_channels(
+            os.path.join(root, "sourcedata/physio/", sub, ses), ses_acq_file[ses][0]
+        )
+        nb_expected_runs[ses]["ch_name"] = ch_name
 
         vol_in_biopac = volume_counter(
             os.path.join(root, "sourcedata/physio/"), sub, ses=ses, tr=tr
@@ -224,14 +223,18 @@ def get_info(
         for i, run in enumerate(vol_in_biopac[ses]):
             run_dict.update({f"run-{i+1:02d}": run})
 
-        nb_expected_runs[ses]['recorded_triggers'] = run_dict
-        nb_expected_runs[ses]['tr'] = tr
+        nb_expected_runs[ses]["recorded_triggers"] = run_dict
+        nb_expected_runs[ses]["tr"] = tr
 
-    else: 
-        #If there is a tsv file matching the acq file and the nii.gz files in root
-        ses_info = list_sub(os.path.join(root, "sourcedata/physio/"), sub, ses, type=".acq")
+    else:
+        # If there is a tsv file matching the acq file and the nii.gz files in root
+        ses_info = list_sub(
+            os.path.join(root, "sourcedata/physio/"), sub, ses, type=".acq"
+        )
 
-        ch_name = get_acq_channels(os.path.join(root, "sourcedata/physio/"), ses_info[0])
+        ch_name = get_acq_channels(
+            os.path.join(root, "sourcedata/physio/"), ses_info[0]
+        )
 
         # iterate through sessions and get _matches.tsv with list_sub dict
         for exp in ses_runs_matches:
@@ -283,7 +286,9 @@ def get_info(
                 try:
                     # do not count the triggers in phys file if no physfile
                     if (
-                        os.path.isfile(os.path.join(root,"sourcedata/physio",sub,exp,name[0]))
+                        os.path.isfile(
+                            os.path.join(root, "sourcedata/physio", sub, exp, name[0])
+                        )
                         is False
                     ):
                         print(
@@ -294,7 +299,10 @@ def get_info(
                         # count the triggers in physfile otherwise
                         try:
                             vol_in_biopac = volume_counter(
-                                os.path.join(root, "sourcedata/physio/"), sub, ses=exp, tr=tr
+                                os.path.join(root, "sourcedata/physio/"),
+                                sub,
+                                ses=exp,
+                                tr=tr,
                             )
                             print("finished counting volumes in physio file for:", exp)
 
@@ -302,7 +310,7 @@ def get_info(
                                 run_dict.update({f"run-{i+1:02d}": run})
 
                             nb_expected_runs[exp]["recorded_triggers"] = run_dict
-                            nb_expected_runs[ses]['ch_name'] = ch_name
+                            nb_expected_runs[ses]["ch_name"] = ch_name
 
                         # skip the session if we did not find the _bold.json
                         except KeyError:
@@ -319,7 +327,7 @@ def get_info(
 
     if show:
         pprintpp.pprint(nb_expected_runs)
-        
+
     if save is not None:
         if os.path.exists(os.path.join(save, sub)) is False:
             os.mkdir(os.path.join(save, sub))
@@ -330,7 +338,7 @@ def get_info(
         with open(os.path.join(save, sub, filename), "w") as fp:
             json.dump(nb_expected_runs, fp, sort_keys=True)
     return nb_expected_runs
-        
+
 
 def _main(argv=None):
     options = _get_parser2().parse_args(argv)

@@ -4,22 +4,23 @@
 Neuromod processing utilities
 """
 # dependencies
-import math
-
 import pandas as pd
 import numpy as np
 import click
 import os
 import json
+
 # high-level processing utils
-from neurokit2 import eda_process, rsp_process, ecg_peaks,  ppg_findpeaks, ecg_process
+from neurokit2 import eda_process, rsp_process, ecg_peaks, ppg_findpeaks, ecg_process
 from systole.correction import correct_rr, correct_peaks
-from heartpy import process, enhance_peaks, exceptions
+from heartpy import process
+
 # signal utils
 from systole.utils import input_conversion
 from neurokit2.misc import as_vector
-from neurokit2 import signal_rate, signal_fixpeaks, signal_filter
+from neurokit2 import signal_rate, signal_filter
 from neurokit2.signal.signal_formatpeaks import _signal_from_indices
+
 # home brewed cleaning utils
 from neuromod_clean import neuromod_ecg_clean
 
@@ -34,16 +35,17 @@ def neuromod_bio_process(tsv=None, h5=None, df=None, sampling_rate=10000):
         pandas DataFrame object
     """
     if df and tsv and h5 is None:
-        raise ValueError("You have to give at least one of the two \n"
-                         "parameters: tsv or df")
+        raise ValueError(
+            "You have to give at least one of the two \n" "parameters: tsv or df"
+        )
 
     if tsv is not None:
-        df = pd.read_csv(tsv, sep='\t', compression='gzip')
+        df = pd.read_csv(tsv, sep="\t", compression="gzip")
         print("Reading TSV file")
 
     if h5 is not None:
-        df = pd.read_hdf(h5, key='bio_df')
-        sampling_rate = pd.read_hdf(h5, key='sampling_rate')
+        df = pd.read_hdf(h5, key="bio_df")
+        sampling_rate = pd.read_hdf(h5, key="sampling_rate")
     # initialize returned objects
     if df is not None:
         print("Reading pandas DataFrame")
@@ -68,25 +70,29 @@ def neuromod_bio_process(tsv=None, h5=None, df=None, sampling_rate=10000):
         bio_df = pd.concat([bio_df, ecg], axis=1)
 
         #  rsp
-        rsp, rsp_info = rsp_process(rsp_raw, sampling_rate=sampling_rate,
-                                    method='khodadad2018')
+        rsp, rsp_info = rsp_process(
+            rsp_raw, sampling_rate=sampling_rate, method="khodadad2018"
+        )
         bio_info.update(rsp_info)
         bio_df = pd.concat([bio_df, rsp], axis=1)
         print("Respiration workflow: done")
 
         #  eda
-        eda, eda_info = eda_process(eda_raw, sampling_rate, method='neurokit')
+        eda, eda_info = eda_process(eda_raw, sampling_rate, method="neurokit")
         bio_info.update(eda_info)
         bio_df = pd.concat([bio_df, eda], axis=1)
         print("Electrodermal activity workflow: done")
 
         # return a dataframe
-        bio_df['TTL'] = df['TTL']
-        bio_df['time'] = df['time']
+        bio_df["TTL"] = df["TTL"]
+        bio_df["time"] = df["time"]
 
-    return(bio_df, bio_info)
+    return (bio_df, bio_info)
 
-def neuromod_process_cardiac(signal_raw, signal_cleaned, sampling_rate = 10000, data_type='PPG'):
+
+def neuromod_process_cardiac(
+    signal_raw, signal_cleaned, sampling_rate=10000, data_type="PPG"
+):
     """
     Process cardiac signal
 
@@ -115,57 +121,90 @@ def neuromod_process_cardiac(signal_raw, signal_cleaned, sampling_rate = 10000, 
     info : dict
         containing list of intervals between peaks
     """
-    #heartpy
+    # heartpy
     print("HeartPy processing started")
-    wd, m = process(signal_cleaned, sampling_rate, reject_segmentwise=True,
-                    interp_clipping=True, report_time=True)
-    cumsum=0
-    rejected_segments=[]
-    for i in wd['rejected_segments']:
-        cumsum += int(np.diff(i)/sampling_rate)
-        rejected_segments.append((int(i[0]),int(i[1])))
-    print('Heartpy found peaks')
-    
+    wd, m = process(
+        signal_cleaned,
+        sampling_rate,
+        reject_segmentwise=True,
+        interp_clipping=True,
+        report_time=True,
+    )
+    cumsum = 0
+    rejected_segments = []
+    for i in wd["rejected_segments"]:
+        cumsum += int(np.diff(i) / sampling_rate)
+        rejected_segments.append((int(i[0]), int(i[1])))
+    print("Heartpy found peaks")
+
     # Find peaks
     print("Neurokit processing started")
-    if data_type in ['ecg', 'ECG']:
-        _, info = ecg_peaks(ecg_cleaned=ecg_cleaned, 
-                            sampling_rate=sampling_rate, 
-                            method='nabian2018',
-                            correct_artifacts=True)
-        info[f'{data_type.upper()}_Peaks'] = info[f'{data_type.upper()}_R_Peaks']
-    elif data_type in ['ppg', 'PPG']:
+    if data_type in ["ecg", "ECG"]:
+        _, info = ecg_peaks(
+            ecg_cleaned=ecg_cleaned,
+            sampling_rate=sampling_rate,
+            method="nabian2018",
+            correct_artifacts=True,
+        )
+        info[f"{data_type.upper()}_Peaks"] = info[f"{data_type.upper()}_R_Peaks"]
+    elif data_type in ["ppg", "PPG"]:
         info = ppg_findpeaks(ppg_cleaned, sampling_rate=sampling_rate)
     else:
         print("Please use a valid data type: 'ECG' or 'PPG'")
 
-    info[f'{data_type.upper()}_Peaks'] = info[f'{data_type.upper()}_Peaks'].tolist()
-    peak_list_nk = _signal_from_indices(info[f'{data_type.upper()}_Peaks'], desired_length=len(ecg_cleaned))
-    print('Neurokit found peaks')
-    
+    info[f"{data_type.upper()}_Peaks"] = info[f"{data_type.upper()}_Peaks"].tolist()
+    peak_list_nk = _signal_from_indices(
+        info[f"{data_type.upper()}_Peaks"], desired_length=len(ecg_cleaned)
+    )
+    print("Neurokit found peaks")
+
     # peak to intervals
-    rr = input_conversion(info[f'{data_type.upper()}_Peaks'], input_type='peaks_idx', output_type='rr_ms', sfreq=sampling_rate)
-    
+    rr = input_conversion(
+        info[f"{data_type.upper()}_Peaks"],
+        input_type="peaks_idx",
+        output_type="rr_ms",
+        sfreq=sampling_rate,
+    )
+
     # correct beat detection
-    corrected, (nMissed, nExtra, nEctopic, nShort, nLong) = correct_rr(rr) 
+    corrected, (nMissed, nExtra, nEctopic, nShort, nLong) = correct_rr(rr)
     corrected_peaks = correct_peaks(peak_list_nk, n_iterations=4)
-    print('systole corrected RR series')
+    print("systole corrected RR series")
     # Compute rate based on peaks
-    rate = signal_rate(info[f'{data_type.upper()}_Peaks'], sampling_rate=sampling_rate,
-                       desired_length=len(signal_raw))
-    
-    # sanitize info dict    
-    info.update({f'{data_type.upper()}_ectopic': nEctopic, f'{data_type.upper()}_short': nShort, f'{data_type.upper()}_long': nLong, f'{data_type.upper()}_extra': nExtra, f'{data_type.upper()}_missed': nMissed,
-                f'{data_type.upper()}_clean_rr_systole': corrected.tolist(),f'{data_type.upper()}_clean_rr_hp': [float(v) for v in wd['RR_list_cor']],
-                f'{data_type.upper()}_rejected_segments': rejected_segments, 
-                f'{data_type.upper()}_cumulseconds_rejected': int(cumsum), 
-                f'{data_type.upper()}_%_rejected_segments': float(cumsum/(len(signal_raw)/sampling_rate))})
-    del info[f'{data_type.upper()}_Peaks']
-    # Prepare output  
+    rate = signal_rate(
+        info[f"{data_type.upper()}_Peaks"],
+        sampling_rate=sampling_rate,
+        desired_length=len(signal_raw),
+    )
+
+    # sanitize info dict
+    info.update(
+        {
+            f"{data_type.upper()}_ectopic": nEctopic,
+            f"{data_type.upper()}_short": nShort,
+            f"{data_type.upper()}_long": nLong,
+            f"{data_type.upper()}_extra": nExtra,
+            f"{data_type.upper()}_missed": nMissed,
+            f"{data_type.upper()}_clean_rr_systole": corrected.tolist(),
+            f"{data_type.upper()}_clean_rr_hp": [float(v) for v in wd["RR_list_cor"]],
+            f"{data_type.upper()}_rejected_segments": rejected_segments,
+            f"{data_type.upper()}_cumulseconds_rejected": int(cumsum),
+            f"{data_type.upper()}_%_rejected_segments": float(
+                cumsum / (len(signal_raw) / sampling_rate)
+            ),
+        }
+    )
+    del info[f"{data_type.upper()}_Peaks"]
+    # Prepare output
     signals = pd.DataFrame(
-                {f'{data_type.upper()}_Raw': ecg_signal, f'{data_type.upper()}_Clean': ecg_cleaned, f'{data_type.upper()}_Peaks_NK': peak_list_nk,
-                f'{data_type.upper()}_Peaks_Systole': corrected_peaks['clean_peaks'],
-                f'{data_type.upper()}_Rate': rate})
+        {
+            f"{data_type.upper()}_Raw": ecg_signal,
+            f"{data_type.upper()}_Clean": ecg_cleaned,
+            f"{data_type.upper()}_Peaks_NK": peak_list_nk,
+            f"{data_type.upper()}_Peaks_Systole": corrected_peaks["clean_peaks"],
+            f"{data_type.upper()}_Rate": rate,
+        }
+    )
 
     return signals, info
 
@@ -197,15 +236,21 @@ def neuromod_ppg_process(ppg_raw, sampling_rate=10000):
     ppg_signal = as_vector(ppg_raw)
 
     # Prepare signal for processing
-    ppg_cleaned = signal_filter(ppg_signal, sampling_rate=sampling_rate,
-                                lowcut=0.5, highcut=8, order=3)
-    print('PPG Cleaned')
+    ppg_cleaned = signal_filter(
+        ppg_signal, sampling_rate=sampling_rate, lowcut=0.5, highcut=8, order=3
+    )
+    print("PPG Cleaned")
     # Process clean signal
-    signals, info = neuromod_process_cardiac(ppg_signal, ppg_cleaned, sampling_rate = 10000, data_type='PPG')
+    signals, info = neuromod_process_cardiac(
+        ppg_signal, ppg_cleaned, sampling_rate=10000, data_type="PPG"
+    )
 
     return signals, info
 
-def neuromod_ecg_process(ecg_raw, trigger_pulse, sampling_rate=10000, method='bottenhorn'):
+
+def neuromod_ecg_process(
+    ecg_raw, trigger_pulse, sampling_rate=10000, method="bottenhorn"
+):
     """
     Process ECG signal.
 
@@ -233,16 +278,22 @@ def neuromod_ecg_process(ecg_raw, trigger_pulse, sampling_rate=10000, method='bo
     ecg_signal = as_vector(ecg_raw)
 
     # Prepare signal for processing
-    ecg_cleaned = neuromod_ecg_clean(ecg_signal, trigger_pulse, sampling_rate=10000, method=method, me=True)
-    print('ECG Cleaned')
+    ecg_cleaned = neuromod_ecg_clean(
+        ecg_signal, trigger_pulse, sampling_rate=sampling_rate, method=method, me=True
+    )
+    print("ECG Cleaned")
     # Process clean signal
-    signals, info = neuromod_process_cardiac(ecg_signal, ecg_cleaned, sampling_rate = 10000, data_type='ECG')
+    signals, info = neuromod_process_cardiac(
+        ecg_signal, ecg_cleaned, sampling_rate=sampling_rate, data_type="ECG"
+    )
 
     return signals, info
 
+
 def neuromod_eda_process():
-    #TO DO
+    # TO DO
     return
+
 
 def load_json(filename):
     """
@@ -258,8 +309,9 @@ def load_json(filename):
     tmp = open(filename)
     data = json.load(tmp)
     tmp.close()
-    
+
     return data
+
 
 def load_segmented_runs(source, sub, ses):
     """
@@ -279,31 +331,37 @@ def load_segmented_runs(source, sub, ses):
         list contaning the filename for each segmented run without the extension
     """
     data_tsv, filenames = [], []
-    files_tsv = [f for f in os.listdir(os.path.join(source, sub, ses)) if 'tsv.gz' in f]
-    #Remove files ending with _01
-    files_tsv = [f for f in files_tsv if '_01.' not in f]
+    files_tsv = [f for f in os.listdir(os.path.join(source, sub, ses)) if "tsv.gz" in f]
+    # Remove files ending with _01
+    files_tsv = [f for f in files_tsv if "_01." not in f]
     files_tsv.sort()
 
     for tsv in files_tsv:
         filename = tsv.split(".")[0]
         filenames.append(filename)
         print(f"---Reading data for {sub} {ses}: run {filename[-2:]}---")
-        json = filename+".json"
+        json = filename + ".json"
         print("Reading json file")
         data_json = load_json(os.path.join(source, sub, ses, json))
         print("Reading tsv file")
-        data_tsv.append(pd.read_csv(os.path.join(source, sub, ses, tsv),
-                                    sep="\t", compression="gzip",
-                                    names=data_json["Columns"]))
-    
+        data_tsv.append(
+            pd.read_csv(
+                os.path.join(source, sub, ses, tsv),
+                sep="\t",
+                compression="gzip",
+                names=data_json["Columns"],
+            )
+        )
+
     return data_tsv, filenames
-        
+
+
 @click.command()
-@click.argument('source', type=str)
-@click.argument('sub', type=str)
-@click.argument('ses', type=str)
-@click.argument('outdir', type=str)
-@click.argument('save', type=bool)
+@click.argument("source", type=str)
+@click.argument("sub", type=str)
+@click.argument("ses", type=str)
+@click.argument("outdir", type=str)
+@click.argument("save", type=bool)
 def process_ppg_data(source, sub, ses, outdir, save=True):
     """
     Parameters
@@ -328,23 +386,35 @@ def process_ppg_data(source, sub, ses, outdir, save=True):
     """
     data_tsv, filenames_tsv = load_segmented_runs(source, sub, ses)
     for idx, d in enumerate(data_tsv):
-        print(f"---Processing PPG signal for {sub} {ses}: run {filenames_tsv[idx][-2:]}---")
-        signals, info = neuromod_ppg_process(d['PPG'], sampling_rate=10000)
+        print(
+            f"---Processing PPG signal for {sub} {ses}: run {filenames_tsv[idx][-2:]}---"
+        )
+        signals, info = neuromod_ppg_process(d["PPG"], sampling_rate=10000)
         if save:
             print("Saving processed data")
-            signals.to_csv(os.path.join(outdir, sub, ses, f"{filenames_tsv[idx]}"+"_ppg_signals"+".tsv"), sep="\t")
-            with open(os.path.join(outdir, sub, ses, f"{filenames_tsv[idx]}"+"_ppg_info"+".json"), 'w') as fp:
+            signals.to_csv(
+                os.path.join(
+                    outdir, sub, ses, f"{filenames_tsv[idx]}" + "_ppg_signals" + ".tsv"
+                ),
+                sep="\t",
+            )
+            with open(
+                os.path.join(
+                    outdir, sub, ses, f"{filenames_tsv[idx]}" + "_ppg_info" + ".json"
+                ),
+                "w",
+            ) as fp:
                 json.dump(info, fp)
 
     return signals, info
 
 
 @click.command()
-@click.argument('source', type=str)
-@click.argument('sub', type=str)
-@click.argument('ses', type=str)
-@click.argument('outdir', type=str)
-@click.argument('save', type=bool)
+@click.argument("source", type=str)
+@click.argument("sub", type=str)
+@click.argument("ses", type=str)
+@click.argument("outdir", type=str)
+@click.argument("save", type=bool)
 def process_ecg_data(source, sub, ses, outdir, save=True):
     """
     Parameters
@@ -369,25 +439,39 @@ def process_ecg_data(source, sub, ses, outdir, save=True):
     """
     data_tsv, filenames_tsv = load_segmented_runs(source, sub, ses)
     for idx, d in enumerate(data_tsv):
-        print(f"---Processing ECG signal for {sub} {ses}: run {filenames_tsv[idx][-2:]}---")
-        print('--Cleaning the signal---')
-        signals, info = neuromod_ecg_process(d['ECG'], d['TTL'], sampling_rate=10000, method='bottenhorn')
+        print(
+            f"---Processing ECG signal for {sub} {ses}: run {filenames_tsv[idx][-2:]}---"
+        )
+        print("--Cleaning the signal---")
+        signals, info = neuromod_ecg_process(
+            d["ECG"], d["TTL"], sampling_rate=10000, method="bottenhorn"
+        )
         if save:
             print("Saving processed data")
-            signals.to_csv(os.path.join(outdir, sub, ses, f"{filenames_tsv[idx]}"+"_ecg_signals"+".tsv"), sep="\t")
-            with open(os.path.join(outdir, sub, ses, f"{filenames_tsv[idx]}"+"_ecg_info"+".json"), 'w') as fp:
+            signals.to_csv(
+                os.path.join(
+                    outdir, sub, ses, f"{filenames_tsv[idx]}" + "_ecg_signals" + ".tsv"
+                ),
+                sep="\t",
+            )
+            with open(
+                os.path.join(
+                    outdir, sub, ses, f"{filenames_tsv[idx]}" + "_ecg_info" + ".json"
+                ),
+                "w",
+            ) as fp:
                 json.dump(info, fp)
 
     return signals, info
 
 
 @click.command()
-@click.argument('source', type=str)
-@click.argument('sub', type=str)
-@click.argument('ses', type=str)
-@click.argument('outdir', type=str)
-@click.argument('save', type=bool)
-def process_rsp_data(source, sub, ses, outdir, save =True):
+@click.argument("source", type=str)
+@click.argument("sub", type=str)
+@click.argument("ses", type=str)
+@click.argument("outdir", type=str)
+@click.argument("save", type=bool)
+def process_rsp_data(source, sub, ses, outdir, save=True):
     """
     Parameters
     -----------
@@ -409,22 +493,29 @@ def process_rsp_data(source, sub, ses, outdir, save =True):
     """
     data_tsv, filenames_tsv = load_segmented_runs(source, sub, ses)
     for idx, d in enumerate(data_tsv):
-        print(f"---Processing RSP signal for {sub} {ses}: run {filenames_tsv[idx][-2:]}---")
-        signals, _ = rsp_process(d['RSP'], sampling_rate=10000, method='khodadad2018')
+        print(
+            f"---Processing RSP signal for {sub} {ses}: run {filenames_tsv[idx][-2:]}---"
+        )
+        signals, _ = rsp_process(d["RSP"], sampling_rate=10000, method="khodadad2018")
         if save:
             print("Saving processed data")
-            signals.to_csv(os.path.join(outdir, sub, ses, f"{filenames_tsv[idx]}"+"_rsp_signals"+".tsv"), sep="\t")
+            signals.to_csv(
+                os.path.join(
+                    outdir, sub, ses, f"{filenames_tsv[idx]}" + "_rsp_signals" + ".tsv"
+                ),
+                sep="\t",
+            )
 
     return signals
 
 
 @click.command()
-@click.argument('source', type=str)
-@click.argument('sub', type=str)
-@click.argument('ses', type=str)
-@click.argument('outdir', type=str)
-@click.argument('save', type=bool)
-def process_eda_data(source, sub, ses, outdir, save =True):
+@click.argument("source", type=str)
+@click.argument("sub", type=str)
+@click.argument("ses", type=str)
+@click.argument("outdir", type=str)
+@click.argument("save", type=bool)
+def process_eda_data(source, sub, ses, outdir, save=True):
     """
     Parameters
     -----------
@@ -444,8 +535,10 @@ def process_eda_data(source, sub, ses, outdir, save =True):
     """
     data_tsv, filenames_tsv = load_segmented_runs(source, sub, ses)
     for idx, d in enumerate(data_tsv):
-        print(f"---Processing EDA signal for {sub} {ses}: run {filenames_tsv[idx][-2:]}---")
-        print('--Cleaning the signal---')
+        print(
+            f"---Processing EDA signal for {sub} {ses}: run {filenames_tsv[idx][-2:]}---"
+        )
+        print("--Cleaning the signal---")
     return
 
 

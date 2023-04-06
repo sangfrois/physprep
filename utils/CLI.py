@@ -3,6 +3,7 @@
 """Parser for utils."""
 import argparse
 
+
 def _get_parser():
     """
     Parse command line inputs for this function.
@@ -101,7 +102,7 @@ def _get_parser2():
         "--subject",
         dest="sub",
         type=str,
-        help='Specify BIDS subject ID',
+        help="Specify BIDS subject ID",
         default=None,
     )
     optional.add_argument(
@@ -109,7 +110,7 @@ def _get_parser2():
         "--session",
         dest="ses",
         type=str,
-        help='Specify BIDS session ID',
+        help="Specify BIDS session ID",
         default=None,
     )
     optional.add_argument(
@@ -136,12 +137,7 @@ def _get_parser2():
     )
 
     optional.add_argument(
-        "-tr",
-        "--tr",
-        dest="tr",
-        help="Specify the tr value",
-        default=1.49,
-        type=float
+        "-tr", "--tr", dest="tr", help="Specify the tr value", default=1.49, type=float
     )
     parser._action_groups.append(optional)
 

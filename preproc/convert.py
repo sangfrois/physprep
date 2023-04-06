@@ -3,7 +3,7 @@
 """Neuromod phys data conversion."""
 
 from phys2bids.phys2bids import phys2bids
-import argparse
+import logging
 import sys
 import pandas as pd
 import gc
@@ -12,7 +12,6 @@ import click
 
 import sys
 sys.path.append("../utils")
-from CLI import _get_parser
 
 @click.command()
 @click.argument("root", type=click.Path(exists=True))
@@ -20,7 +19,6 @@ from CLI import _get_parser
 @click.argument("sub", type=str)
 @click.argument("ses", type=str)
 @click.option("--tr", type=float)
-
 def neuromod_phys2bids(root, save, sub, ses=None, tr=1.49):
     """
     Phys2Bids conversion for one subject data
@@ -44,8 +42,10 @@ def neuromod_phys2bids(root, save, sub, ses=None, tr=1.49):
     --------
     phys2bids output
     """
+    logger = logging.getLogger(__name__)
     # fetch info
-    print(os.path.join(root, sub, f"{sub}_volumes_all-ses-runs.json"))
+    fetcher = f"{sub}_volumes_all-ses-runs.json"
+    logger.info(f"Reading fetcher:\n{os.path.join(root, sub, fetcher)}")
     info = pd.read_json(os.path.join(root, sub, f"{sub}_volumes_all-ses-runs.json"))
     # define sessions
     if ses is None:
@@ -54,12 +54,13 @@ def neuromod_phys2bids(root, save, sub, ses=None, tr=1.49):
         ses = [ses]
     # Define ch_name
     if info[ses]['ch_name'] is None:
-        print("Warning: you did not specify a value for ch_name, the values that will be use are the following: ")
+        logger.info("Warning: you did not specify a value for ch_name, the values that will be use are the following: ")
         ch_name = ["EDA", "PPG", "ECG", "TTL", "RSP"]
-        print(ch_name)
-        print("Please make sure, those values are the right ones !")
+        info[ses]['ch_name'] = ch_name
+        logger.info("Please make sure, those values are the right ones :\n{ch_name}")
         chtrig=4
     else:
+        # Define chtrig ; should find a way to find it from a list of possible values
         chtrig = info[ses]['ch_name'].index('TTL')
 
     # iterate through info
@@ -67,7 +68,7 @@ def neuromod_phys2bids(root, save, sub, ses=None, tr=1.49):
         # skip empty sessions
         if info[col] is None:
             continue
-        print(col)
+        logger.info(col)
 
         # Iterate through files in each session and run phys2bids
         filename = info[col]["in_file"]
@@ -148,11 +149,7 @@ def neuromod_phys2bids(root, save, sub, ses=None, tr=1.49):
         print("~" * 30)
 
 
-def _main(argv=None):
-    #options = _get_parser().parse_args(argv)
-    #neuromod_phys2bids(**vars(options))
-    neuromod_phys2bids()
-
 if __name__ == "__main__":
+    log_fmt = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    logging.basicConfig(level=logging.INFO, format=log_fmt
     neuromod_phys2bids()
-    #_main(sys.argv[1:])
