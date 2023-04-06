@@ -1,0 +1,13 @@
+#! bin/bash
+
+SOURCE="/scratch/mepicard/physio_data/emotionvideos/"
+OUTDIR="/scratch/mepicard/physio_data/emotionvideos/processed"
+
+for dir in $SOURCE
+do
+    echo $dir
+done
+
+
+
+
