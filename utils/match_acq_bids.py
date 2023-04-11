@@ -1,24 +1,17 @@
 import os, sys
 import bids
-import bioread
+import click
 import pandas
+import bioread
+import logging
 import pathlib
 import argparse
-import logging
 import datetime
 from pytz import timezone
-
 
 def parse_args():
     parser = argparse.ArgumentParser(
         formatter_class=argparse.RawTextHelpFormatter,
-        description="match acq_files to bold MRI series",
-    )
-    parser.add_argument("bids_path", type=pathlib.Path, help="BIDS folder")
-    parser.add_argument(
-        "biopac_data_path",
-        type=pathlib.Path,
-        help="folder where biopac data were dumped",
     )
     parser.add_argument(
         "--debug",
@@ -29,7 +22,9 @@ def parse_args():
     )
     return parser.parse_args()
 
-
+@click.command()
+@click.argument('bids_path', type=str)
+@click.argument('biopac_path', type=str)
 def match_all_bolds(bids_path, biopac_path):
     """
     Match the Acqknowldge files (.acq) with the bold files (.nii.gz).
@@ -114,4 +109,4 @@ def match_all_bolds(bids_path, biopac_path):
 if __name__ == "__main__":
     parsed = parse_args()
     logging.basicConfig(level=logging.getLevelName(parsed.debug_level.upper()))
-    match_all_bolds(parsed.bids_path, parsed.biopac_data_path)
+    match_all_bolds()
