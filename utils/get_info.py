@@ -161,12 +161,12 @@ def get_acq_channels(root, acq_file):
 @click.command()
 @click.argument('root', type=str)
 @click.argument('sub', type=str)
-@click.option('ses', type=str, default=None)
-@click.option('count_vol', type=bool, default=False)
-@click.option('show', type=bool, default=True)
-@click.option('save', type=str, default=None)
-@click.option('tr', type=float, default=None)
-@click.option('trigger_ch', type=str, default=None)
+@click.option('ses', type=str, default=None, required=False)
+@click.option('count_vol', type=bool, default=False, required=False)
+@click.option('show', type=bool, default=True, required=False)
+@click.option('save', type=str, default=None, required=False)
+@click.option('tr', type=float, default=None, required=False)
+@click.option('trigger_ch', type=str, default=None, required=False)
 def get_info(
     root=None, sub=None, ses=None, count_vol=False, show=True, save=None, tr=None, trigger_ch=None
 ):
