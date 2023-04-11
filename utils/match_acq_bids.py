@@ -31,10 +31,21 @@ def parse_args():
 
 
 def match_all_bolds(bids_path, biopac_path):
+    """
+    Match the Acqknowldge files (.acq) with the bold files (.nii.gz).
+    The correspondence between the acq and the nii files is saved in
+    a tsv file.
 
+    Parameters
+    ----------
+    bids_path : str
+        BIDS data directory.
+    biopac_path : str
+        Biopac data directory.
+    """
     tz = timezone("Canada/Eastern")
 
-    # get acqk file starts and end datetimes<
+    # get acq file starts and end datetimes
     acqk_files = sorted(list(biopac_path.glob("*.acq")))
     acqk_files_startends = []
     for acqk in acqk_files:
