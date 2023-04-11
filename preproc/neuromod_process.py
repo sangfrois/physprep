@@ -4,20 +4,20 @@
 Neuromod processing utilities
 """
 # dependencies
-import pandas as pd
-import numpy as np
-import click
 import os
 import json
+import click
+import numpy as np
+import pandas as pd
 
 # high-level processing utils
-from neurokit2 import eda_process, rsp_process, ecg_peaks, ppg_findpeaks, ecg_process
-from systole.correction import correct_rr, correct_peaks
 from heartpy import process
+from systole.correction import correct_rr, correct_peaks
+from neurokit2 import eda_process, rsp_process, ecg_peaks, ppg_findpeaks, ecg_process
 
 # signal utils
-from systole.utils import input_conversion
 from neurokit2.misc import as_vector
+from systole.utils import input_conversion
 from neurokit2 import signal_rate, signal_filter
 from neurokit2.signal.signal_formatpeaks import _signal_from_indices
 
@@ -29,10 +29,22 @@ def neuromod_bio_process(tsv=None, h5=None, df=None, sampling_rate=10000):
     """
     Process biosignals.
 
-    tsv :
-        directory of BIDSified biosignal recording
-    df (optional) :
+    Parameters
+    ----------
+    tsv : str
+        Directory of BIDSified biosignal recording
+    h5 : str
+        Default to None
+    df : DataFrame
         pandas DataFrame object
+        Default to None
+    sampling_rate : int
+        Default to 10000
+
+    Returns
+    -------
+    bio_df : DataFrame
+    bio_info : dict
     """
     if df and tsv and h5 is None:
         raise ValueError(
@@ -99,7 +111,7 @@ def neuromod_process_cardiac(
     Extract features of interest for neuromod project
 
     Parameters
-    -----------
+    ----------
     signal_raw : array
         Raw PPG/ECG signal
     signal_cleaned : array
@@ -216,12 +228,13 @@ def neuromod_ppg_process(ppg_raw, sampling_rate=10000):
     Custom processing function for neuromod PPG acquisition
 
     Parameters
-    -----------
+    ----------
     ppg_raw : vector
         The raw PPG channel.
     sampling_rate : int
         The sampling frequency of `ppg_signal` (in Hz, i.e., samples/second).
-        Defaults to 10000.
+        Default to 10000.
+
     Returns
     -------
     signals : DataFrame
@@ -257,14 +270,16 @@ def neuromod_ecg_process(
     Custom processing for neuromod ECG acquisition.
 
     Parameters
-    -----------
+    -----------=
     ecg_raw : vector
         The raw ECG channel.
     sampling_rate : int
         The sampling frequency of `ecg_signal` (in Hz, i.e., samples/second).
-        Defaults to 10000.
+        Default to 10000.
     method : str
-        The processing pipeline to apply. Defaults to 'fmri'
+        The processing pipeline to apply.
+        Default to 'fmri'.
+
     Returns
     -------
     signals : DataFrame
@@ -298,13 +313,14 @@ def neuromod_eda_process():
 def load_json(filename):
     """
     Parameters
-    -----------
+    ----------
     filename : str
-        file path of the .json to load
+        File path of the .json to load
+
     Returns
     -------
     data : dict
-        dict with the content of the .json passed in argument
+        Dictionary with the content of the .json passed in argument
     """
     tmp = open(filename)
     data = json.load(tmp)
@@ -316,13 +332,14 @@ def load_json(filename):
 def load_segmented_runs(source, sub, ses):
     """
     Parameters
-    -----------
+    ----------
     source : str
         main directory contaning the segmented runs
     sub : str
         id of the subject
     ses : str
         id of the session
+
     Returns
     -------
     data_tsv : list
@@ -365,7 +382,7 @@ def load_segmented_runs(source, sub, ses):
 def process_ppg_data(source, sub, ses, outdir, save=True):
     """
     Parameters
-    -----------
+    ----------
     source : str
         main directory contaning the segmented runs
     sub : str
@@ -376,13 +393,14 @@ def process_ppg_data(source, sub, ses, outdir, save=True):
         directory to save the outputs
     save : bool
         indicate if the outputs should be saved or not 
-        Default True
+        Default to True
+
     Returns
     -------
-    signals :  DataFrame
+    signals : DataFrame
         Dataframe containing the signal cleaned and processed
     info : dict
-        dictionnary containing the info of peaks and sampling rate
+        Dictionnary containing the info of peaks and sampling rate
     """
     data_tsv, filenames_tsv = load_segmented_runs(source, sub, ses)
     for idx, d in enumerate(data_tsv):
@@ -418,7 +436,7 @@ def process_ppg_data(source, sub, ses, outdir, save=True):
 def process_ecg_data(source, sub, ses, outdir, save=True):
     """
     Parameters
-    -----------
+    ----------
     source : str
         main directory contaning the segmented runs
     sub : str
@@ -429,7 +447,8 @@ def process_ecg_data(source, sub, ses, outdir, save=True):
         directory to save the outputs
     save : bool
         indicate if the outputs should be saved or not 
-        Default True
+        Default to True
+
     Returns
     -------
     signals :  DataFrame
@@ -474,7 +493,7 @@ def process_ecg_data(source, sub, ses, outdir, save=True):
 def process_rsp_data(source, sub, ses, outdir, save=True):
     """
     Parameters
-    -----------
+    ----------
     source : str
         main directory contaning the segmented runs
     sub : str
@@ -485,7 +504,8 @@ def process_rsp_data(source, sub, ses, outdir, save=True):
         directory to save the outputs
     save : bool
         indicate if the outputs should be saved or not 
-        Default True
+        Default to True
+
     Returns
     -------
     signals : DataFrame
@@ -518,7 +538,7 @@ def process_rsp_data(source, sub, ses, outdir, save=True):
 def process_eda_data(source, sub, ses, outdir, save=True):
     """
     Parameters
-    -----------
+    ----------
     source : str
         main directory contaning the segmented runs
     sub : str
@@ -529,7 +549,8 @@ def process_eda_data(source, sub, ses, outdir, save=True):
         directory to save the outputs
     save : bool
         indicate if the outputs should be saved or not 
-        Default True
+        Default to True
+
     Returns
     -------
     """
