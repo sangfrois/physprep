@@ -2,42 +2,58 @@
 # !/usr/bin/env python
 """CLI for physio utils."""
 
-import pprintpp
 import os
-import logging
-from CLI import _get_parser
 import sys
-
+import click
+import logging
+import pprintpp
 
 LGR = logging.getLogger(__name__)
 
-
-def list_sub(root, sub, ses=None, type=".acq", save=False, show=False):
+@click.command()
+@click.argument('root', type=str)
+@click.argument('sub', type=str)
+@click.option('--ses', type=str, default=None, required=False)
+@click.option('--ext', type=str, default='.acq', required=False)
+@click.option('--save', type=str, default=None, required=False)
+@click.option('--show', type=bool, default=False, required=False)
+def list_sub(root, sub, ses=None, ext=".acq", save=None, show=False):
     """
     List a subject's files.
 
-    Returns a dictionary entry for each session in a subject's directory
-    Each entry is a list of files for a given subject/ses directory
-    if ses is given, only one dictionary entry is returned
+    Returns a dictionary entry for each session in a subject's directory.
+    Each entry is a list of files for a given subject/ses directory.
+    If ses is given, only one dictionary entry is returned.
 
     Arguments
     ---------
-    root : str path
-        root directory of dataset, like "home/user/dataset"
-    sub : str BIDS code
-        subject number, like "sub-01"
-    ses : str BIDS code
-        session name or number, like "ses-001"
-    type : str
-        what file are we looking for. Default is biosignals from biopac
+    root : str
+        Root directory of dataset containing the data. Example: "home/user/dataset/".
+    sub : str 
+        Name of path for a specific subject. Example: "sub-01".
+    ses : str 
+        Name of path for a specific session. Example: "ses-001".
+        Default to None.
+    ext : str
+        Specify the extension of the files are we looking for.
+        Default to '.acq'; biosignals from biopac.
+    save : str
+        Specify where you want to save the lists.
+        If not specified, the output will not be saved. 
+        Default to None.
     show : bool
-        Defaults to False. Else, prints the output dict
+        If True, prints the output dict.
+        Default to False. 
+
     Returns
     -------
-    ses_list :
-        list of sessions in the subject's folder
-    files_list :
-        list of files by their name
+    ses_runs : dict
+        Dictionary containing the sessions id in the subject's folder, and the name
+        of the acqknowledge file. 
+        Returned if `ses` is not specified.
+    files : dict
+        Dictionary of acqknowledge filenames for each session.
+        Returned if `ses` is specified.
 
     Example :
     >>> ses_runs = list_sub(root = "/home/user/dataset/", sub = "sub-01")
@@ -56,7 +72,7 @@ def list_sub(root, sub, ses=None, type=".acq", save=False, show=False):
         if os.path.exists(dir):
             for filename in os.listdir(dir):
 
-                if filename.endswith(type):
+                if filename.endswith(ext):
                     file_list += [filename]
             if show:
                 print("list of sessions in subjet's directory: ", ses_list)
@@ -64,6 +80,11 @@ def list_sub(root, sub, ses=None, type=".acq", save=False, show=False):
 
             # return a dictionary entry for the specified session
             files = {str(ses): file_list}
+
+            if save is not None:
+                with open(os.path.join(save, sub, ses, 'list_sub_acq_files.json'), "w") as fp:
+                    json.dump(files, fp)
+
             return files
         else:
             print("list of sessions in subjet's directory: ", ses_list)
@@ -79,7 +100,7 @@ def list_sub(root, sub, ses=None, type=".acq", save=False, show=False):
             # iterate through directory's content
             for filename in os.listdir(os.path.join(path_sub, exp)):
 
-                if filename.endswith(type):
+                if filename.endswith(ext):
                     file_list += [filename]
 
             # save the file_list as dict item
@@ -88,29 +109,28 @@ def list_sub(root, sub, ses=None, type=".acq", save=False, show=False):
         # display the lists (optional)
         if show:
             pprintpp.pprint(ses_runs)
+
+        if save is not None:
+            with open(os.path.join(save, sub, 'list_sub_acq_files.json'), "w") as fp:
+                json.dump(ses_runs, fp)
+
         return ses_runs
     # list files in a sub directory without sessions
     else:
         # push filenames in a list
         for filename in os.listdir(path_sub):
-            if filename.endswith(type):
+            if filename.endswith(ext):
                 file_list += [filename]
         # store list
         ses_runs["random_files"] = file_list
 
+        if save is not None:
+            with open(os.path.join(save, sub, 'list_sub_acq_files.json'), "w") as fp:
+                json.dump(ses_runs, fp)
+
         # return a dictionary of sessions each containing a list of files
         return ses_runs
-    if save is not False:
-        print(f"write the rest of code to save where specified:{save}")
-
-
-#  Get arguments
-
-
-def _main(argv=None):
-    options = _get_parser().parse_args(argv)
-    list_sub(**vars(options))
 
 
 if __name__ == "__main__":
-    _main(sys.argv[1:])
+    list_sub()
