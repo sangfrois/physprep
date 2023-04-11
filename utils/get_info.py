@@ -2,43 +2,46 @@
 # !/usr/bin/env python -W ignore::DeprecationWarning
 
 """another util for neuromod phys data conversion."""
-import pprintpp
+
+import os
+import sys
+import json
 import glob
 import math
-import sys
+import click
 import bioread
-from list_sub import list_sub
-import json
 import logging
-from CLI import _get_parser2
-import os
+import pprintpp
+from list_sub import list_sub
 from neurokit2 import read_acqknowledge
-from argparse import ArgumentParser
 
 LGR = logging.getLogger(__name__)
 
 
-def volume_counter(root, sub, ses=None, tr=1.49):
+def volume_counter(root, sub, ses=None, tr=1.49, trigger_ch='TTL'):
     """
     Volume counting for each run in a session.
 
-    Make sure the trigger channel is named "TTL" because it is hard-coded
-    Parameters:
-    ------------
-    root : path
-        main directory containing the biopac data (e.g. /to/dataset/sourcedata)
-    subject : string
-        name of path for a specific subject (e.g.'sub-03')
-    ses : string
-        name of acquisition session. Optional workflow for specific experiment
-        default is None
+    Parameters
+    ----------
+    root : str
+        Directory containing the biopac data. Example: "home/user/dataset/sourcedata/physio".
+    subject : str
+        Name of path for a specific subject. Example: "sub-01".
+    ses : str
+        Name of path for a specific session (optional workflow for specific experiment).
+        Default to none.
     tr : float
-	    value of the TR used in the MRI sequence
+	    Value of the TR used in the MRI sequence.
+        Default to 1.49.
+    trigger_ch : str
+        Name of the trigger channel used on Acknowledge.
+        Defaults to 'TTL'.
 
-    Returns:
-    --------
-    ses_runs: dictionary
-        each key lists the number of volumes in each run, including invalids
+    Returns
+    -------
+    ses_runs: dict
+        Each key lists the number of volumes/triggers in each run, including invalid volumes.
     """
     # Check directory
     if os.path.exists(root) is False:
@@ -47,21 +50,18 @@ def volume_counter(root, sub, ses=None, tr=1.49):
     # List the files that have to be counted
     dirs = list_sub(root, sub, ses)
     ses_runs = {}
-    # loop iterating through files in each dict key representing session
-    # returned by list_sub
-    # for this loop, exp refers to session's name,
-    # avoiding confusion with ses argument
+    # loop iterating through files in each dict key representing session returned by list_sub
+    # for this loop, exp refers to session's name, avoiding confusion with ses argument
     for exp in dirs:
         print("counting volumes in physio file for:", exp)
         for file in sorted(dirs[exp]):
             # reading acq
             bio_df, fs = read_acqknowledge(
                 os.path.join(root, sub, exp, file)
-            )  # resampling
+            )
             # find the correct index of Trigger channel
-            # NOTE: adapt to other possible names or import as arg from user or import phy2bids util
-            if "Custom, HLT100C - A 5" in bio_df.columns:
-                trigger_index = list(bio_df.columns).index("Custom, HLT100C - A 5")
+            if trigger_ch in bio_df.columns:
+                trigger_index = list(bio_df.columns).index(trigger_ch)
 
             # initialize a df with TTL values over 4 (switch either ~0 or ~5)
             query_df = bio_df[bio_df[bio_df.columns[trigger_index]] > 4]
@@ -128,19 +128,19 @@ def volume_counter(root, sub, ses=None, tr=1.49):
 
 def get_acq_channels(root, acq_file):
     """
-    Get the names of the channels in the acq file 
+    Get the names of the channels in the acq file
 
-    Parameters:
-    ------------
-    root : path
-        directory containing the biopac data
-    acq_file : string
-        name of the acqknowledge file
+    Parameters
+    ----------
+    root : str
+        Directory containing the biopac data. Example: "home/user/dataset/sourcedata/physio/sub-01/ses-001".
+    acq_file : str
+        Name of the acqknowledge file.
     
-    Returns:
-    --------
+    Returns
+    -------
     ch_name : list
-        list of the channel names in the same order as they are in the acq file
+        List of the channel names in the same order as they are in the acqknowledge file.
     """
     read_acq = bioread.read_file(os.path.join(root, acq_file))
     ch_name = []
@@ -158,40 +158,67 @@ def get_acq_channels(root, acq_file):
 
     return ch_name
 
-
+@click.command()
+@click.argument('root', type=str)
+@click.argument('sub', type=str)
+@click.option('ses', type=str, default=None)
+@click.option('count_vol', type=bool, default=False)
+@click.option('show', type=bool, default=True)
+@click.option('save', type=str, default=None)
+@click.option('tr', type=float, default=None)
+@click.option('trigger_ch', type=str, default=None)
 def get_info(
-    root=None, sub=None, ses=None, count_vol=False, show=True, save=None, tr=None
+    root=None, sub=None, ses=None, count_vol=False, show=True, save=None, tr=None, trigger_ch=None
 ):
     """
     Get all volumes taken for a sub.
-
-    get_info pushes the info necessary to execute the phys2bids multi-run
+    `get_info` pushes the info necessary to execute the phys2bids multi-run
     workflow to a dictionary. It can save it to `_volumes_all-ses-runs.json`
     in a specified path, or be printed in your terminal.
-
+    The examples given in the Arguments section assume that the data followed this structure :
+    home/
+    └── users/
+        └── dataset/
+            └── sourcedata/
+                └── physio/
+                    ├── sub-01/
+                    |   ├── ses-001/
+                    |   |   └── file.acq
+                    |   ├── ses-002/
+                    |   |   └── file.acq
+                    |   └── ses-0XX/
+                    |       └── file.acq
+                    └── sub-XX/
+                        ├── ses-001/
+                        |   └── file.acq
+                        └── ses-0XX/
+                            └── file.acq
     Arguments
     ---------
-    root : str BIDS CODE
-        root directory of dataset, like "home/user/dataset"
-    sub : str BIDS CODE
-        subject number, like "sub-01"
-    ses : str BIDS CODE
-        session name or number, like "ses-001"
+    root : str
+        Root directory of dataset containing the data. Example: "home/user/dataset/".
+    sub : str
+        Name of path for a specific subject. Example: "sub-01".
+    ses : str
+        Name of path for a specific session. Example: "ses-001".
     count_vol : bool
-        Defaults to False. Specify if you want to count triggers in physio file
+        Specify if you want to count triggers in physio file.
+        Default to False. 
     show : bool
-        Defaults to True. Specify if you want to print the dictionary
-    save : path
-        Defaults to None and will save where you run the script. Specify where you want to save
-        the dictionary in json format
+        Specify if you want to print the dictionary.
+        Default to True. 
+    save : str
+        Specify where you want to save the dictionary in json format.
+        If not specified, the output will be saved where you run the script. 
+        Default to None.
     tr : float
-        Defaults to None. Value of the TR used in the MRI sequence.
-
+        Value of the TR used in the MRI sequence.
+        Default to None. 
     Returns
     -------
     ses_runs_vols : dict
-        number of processed runs, number of expected runs, number of trigger or
-        volumes per run, sourcedata file location
+        Number of processed runs, number of expected runs, number of triggers/volumes per run, 
+        sourcedata file location.
     """
     # list matches for a whole subject's dir
     ses_runs_matches = list_sub(
@@ -217,7 +244,7 @@ def get_info(
         nb_expected_runs[ses]["ch_name"] = ch_name
 
         vol_in_biopac = volume_counter(
-            os.path.join(root, "sourcedata/physio/"), sub, ses=ses, tr=tr
+            os.path.join(root, "sourcedata/physio/"), sub, ses=ses, tr=tr, trigger_ch=trigger_ch
         )
 
         for i, run in enumerate(vol_in_biopac[ses]):
@@ -243,7 +270,7 @@ def get_info(
             # initialize a counter and a dictionary
             nb_expected_volumes_run = {}
             tasks = []
-            matches = glob.glob(f"{root}{sub}/{exp}/func/*bold.json")
+            matches = glob.glob(os.path.join(root, sub, exp, "func", "*bold.json"))
             matches.sort()
             print(matches)
             # iterate through _bold.json
@@ -293,7 +320,7 @@ def get_info(
                     ):
                         print(
                             "cannot find session directory for sourcedata :",
-                            f"{root}sourcedata/physio/{sub}/{exp}/{name[0]}",
+                            os.path.join(root, "sourcedata/physio", sub, exp, name[0]),
                         )
                     else:
                         # count the triggers in physfile otherwise
@@ -319,7 +346,7 @@ def get_info(
                     nb_expected_runs[exp]["recorded_triggers"] = float("nan")
                     print(
                         "Directory is empty or file is clobbered/No triggers: ",
-                        f"{root}sourcedata/physio/{sub}/{exp}/",
+                        os.path.join(root, "sourcedata/physio", sub, exp),
                     )
 
                     print(f"skipping :{exp} for task {filename}")
@@ -339,11 +366,5 @@ def get_info(
             json.dump(nb_expected_runs, fp, sort_keys=True)
     return nb_expected_runs
 
-
-def _main(argv=None):
-    options = _get_parser2().parse_args(argv)
-    get_info(**vars(options))
-
-
 if __name__ == "__main__":
-    _main(sys.argv[1:])
+    get_info()
