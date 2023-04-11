@@ -3,6 +3,9 @@
 """Parser for utils."""
 import argparse
 
+"""
+NOTE: eventually remove that script to only rely on click instead of argparse
+"""
 
 def _get_parser():
     """
