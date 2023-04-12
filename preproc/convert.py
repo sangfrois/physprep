@@ -1,14 +1,14 @@
 # -*- coding: utf-8 -*-
 # !/usr/bin/env python -W ignore::DeprecationWarning
-"""Neuromod phys data conversion."""
+"""Physiological data conversion to BIDS"""
 
-from phys2bids.phys2bids import phys2bids
-import logging
-import sys
-import pandas as pd
 import gc
 import os
+import json
 import click
+import logging
+import pandas as pd
+from phys2bids.phys2bids import phys2bids
 
 import sys
 sys.path.append("../utils")
@@ -17,14 +17,25 @@ sys.path.append("../utils")
 @click.argument("root", type=click.Path(exists=True))
 @click.argument("save", type=click.Path())
 @click.argument("sub", type=str)
-@click.argument("ses", type=str)
-@click.option("--tr", type=float)
-def neuromod_phys2bids(root, save, sub, ses=None, tr=1.49):
+@click.option("--ses", type=str, default=None, required=False)
+@click.option("--tr", type=float, default=1.49, required=False)
+@click.option("--ch_name", default=None, required=False)
+def call_convert(root, save, sub, ses=None, tr=1.49, ch_name=None):
+    """
+    Call `convert` function only if `convert.py` is called as CLI
+
+    For parameters description, please refer to the documentation of the `convert` function
+    """
+    if ch_name is not None:
+        ch_name = json.loads(ch_name)
+    convert(root, save, sub, ses=None, tr=1.49, ch_name=None)
+
+def convert(root, save, sub, ses=None, tr=1.49, ch_name=None):
     """
     Phys2Bids conversion for one subject data
 
-    Parameters:
-    ------------
+    Parameters
+    ----------
     root : path
         main directory containing the biopac data (e.g. /to/dataset/info)
     save : path
@@ -38,9 +49,13 @@ def neuromod_phys2bids(root, save, sub, ses=None, tr=1.49):
     ch_name : list
         specify the name of the channels in the acqknowledge file
 
-    Returns:
+    Examples
     --------
-    phys2bids output
+    In script
+    >>> convert(root="/home/user/dataset/info", save="/home/user/dataset/convert/", sub="sub-01", ses="ses-001", tr=1.49, ch_name=["EDA", "ECG", "TTL"])
+    In terminal
+    >>> python convert.py /home/user/dataset/info /home/user/dataset/convert/ sub-01 --ses ses-001 --tr 1.49 --ch_name '["EDA", "ECG", "TTL"]'
+    NOTE: if you want to specify the `ch_name` using the CLI, specify your list inside single quote ('') just like the example above.
     """
     logger = logging.getLogger(__name__)
     # fetch info
@@ -151,5 +166,5 @@ def neuromod_phys2bids(root, save, sub, ses=None, tr=1.49):
 
 if __name__ == "__main__":
     log_fmt = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-    logging.basicConfig(level=logging.INFO, format=log_fmt
-    neuromod_phys2bids()
+    logging.basicConfig(level=logging.INFO, format=log_fmt)
+    call_convert()
