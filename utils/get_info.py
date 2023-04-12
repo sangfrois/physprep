@@ -237,9 +237,9 @@ def get_info(root, sub, ses=None, count_vol=False, show=True, save=None, tr=None
     Examples
     --------
     In script
-    >>> ses_runs_vols = get_info(root="/home/user/dataset/", sub="sub-01", ses="ses-001", count_vol=True, save="/home/user/dataset/output/", tr=2.0)
+    >>> ses_runs_vols = get_info(root="/home/user/dataset/", sub="sub-01", ses="ses-001", count_vol=True, save="/home/user/dataset/info/", tr=2.0)
     In terminal
-    >>> python get_info.py /home/user/dataset/ sub-01 --ses ses-001 --count_vol True --save /home/user/dataset/output --tr 2.0 --tr_channel 'Custom, HLT100C - A 5'
+    >>> python get_info.py /home/user/dataset/ sub-01 --ses ses-001 --count_vol True --save /home/user/dataset/info/ --tr 2.0 --tr_channel 'Custom, HLT100C - A 5'
     """
     # list matches for a whole subject's dir
     ses_runs_matches = list_sub(
