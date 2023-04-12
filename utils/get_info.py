@@ -25,7 +25,7 @@ def volume_counter(root, sub, ses=None, tr=1.49, trigger_ch='TTL'):
     Parameters
     ----------
     root : str
-        Directory containing the biopac data. Example: "home/user/dataset/sourcedata/physio".
+        Directory containing the biopac data. Example: "/home/user/dataset/sourcedata/physio".
     subject : str
         Name of path for a specific subject. Example: "sub-01".
     ses : str
@@ -36,7 +36,7 @@ def volume_counter(root, sub, ses=None, tr=1.49, trigger_ch='TTL'):
         Default to 1.49.
     trigger_ch : str
         Name of the trigger channel used on Acknowledge.
-        Defaults to 'TTL'.
+        Default to 'TTL'.
 
     Returns
     -------
@@ -126,14 +126,18 @@ def volume_counter(root, sub, ses=None, tr=1.49, trigger_ch='TTL'):
     return ses_runs
 
 
-def get_acq_channels(root, acq_file):
+def get_acq_channels(root, sub, ses, acq_file):
     """
     Get the names of the channels in the acq file
 
     Parameters
     ----------
     root : str
-        Directory containing the biopac data. Example: "home/user/dataset/sourcedata/physio/sub-01/ses-001".
+        Directory containing the biopac data. Example: "/home/user/dataset/sourcedata/physio/".
+    sub : str
+        Name of path for a specific subject. Example: "sub-01".
+    ses : str
+        Name of path for a specific session. Example: "ses-001".
     acq_file : str
         Name of the acqknowledge file.
     
@@ -142,7 +146,7 @@ def get_acq_channels(root, acq_file):
     ch_name : list
         List of the channel names in the same order as they are in the acqknowledge file.
     """
-    read_acq = bioread.read_file(os.path.join(root, acq_file))
+    read_acq = bioread.read_file(os.path.join(root, sub, ses, acq_file))
     ch_name = []
     for ch in read_acq.channel_headers:
         if "PPG" in ch.name:
@@ -161,15 +165,21 @@ def get_acq_channels(root, acq_file):
 @click.command()
 @click.argument('root', type=str)
 @click.argument('sub', type=str)
-@click.option('ses', type=str, default=None, required=False)
-@click.option('count_vol', type=bool, default=False, required=False)
-@click.option('show', type=bool, default=True, required=False)
-@click.option('save', type=str, default=None, required=False)
-@click.option('tr', type=float, default=None, required=False)
-@click.option('trigger_ch', type=str, default=None, required=False)
-def get_info(
-    root=None, sub=None, ses=None, count_vol=False, show=True, save=None, tr=None, trigger_ch=None
-):
+@click.option('--ses', type=str, default=None, required=False)
+@click.option('--count_vol', type=bool, default=False, required=False)
+@click.option('--show', type=bool, default=True, required=False)
+@click.option('--save', type=str, default=None, required=False)
+@click.option('--tr', type=float, default=None, required=False)
+@click.option('--tr_channel', type=str, default=None, required=False)
+def call_get_info(root, sub, ses=None, count_vol=False, show=True, save=None, tr=None, tr_channel=None):
+    """
+    Call `get_info` function only if `get_info.py` is called as CLI
+
+    For parameters description, please refer to the documentation of the `get_info` function
+    """
+    get_info(root, sub, ses, count_vol, show, save, tr, tr_channel)
+
+def get_info(root, sub, ses=None, count_vol=False, show=True, save=None, tr=None, tr_channel=None):
     """
     Get all volumes taken for a sub.
     `get_info` pushes the info necessary to execute the phys2bids multi-run
@@ -196,7 +206,7 @@ def get_info(
     Arguments
     ---------
     root : str
-        Root directory of dataset containing the data. Example: "home/user/dataset/".
+        Root directory of dataset containing the data. Example: "/home/user/dataset/".
     sub : str
         Name of path for a specific subject. Example: "sub-01".
     ses : str
@@ -214,15 +224,26 @@ def get_info(
     tr : float
         Value of the TR used in the MRI sequence.
         Default to None. 
+    trigger_ch : str
+        Name of the trigger channel used on Acknowledge.
+        Defaults to None.
+
     Returns
     -------
     ses_runs_vols : dict
         Number of processed runs, number of expected runs, number of triggers/volumes per run, 
         sourcedata file location.
+
+    Examples
+    --------
+    In script
+    >>> ses_runs_vols = get_info(root="/home/user/dataset/", sub="sub-01", ses="ses-001", count_vol=True, save="/home/user/dataset/output/", tr=2.0)
+    In terminal
+    >>> python get_info.py /home/user/dataset/ sub-01 --ses ses-001 --count_vol True --save /home/user/dataset/output --tr 2.0 --tr_channel 'Custom, HLT100C - A 5'
     """
     # list matches for a whole subject's dir
     ses_runs_matches = list_sub(
-        os.path.join(root, "sourcedata/physio/"), sub, ses, type=".tsv", show=show
+        os.path.join(root, "sourcedata/physio/"), sub, ses=ses, ext=".tsv", show=show
     )
 
     # go to fmri matches and get entries for each run of a session
@@ -234,17 +255,21 @@ def get_info(
         nb_expected_runs[ses] = {}
 
         ses_acq_file = list_sub(
-            os.path.join(root, "sourcedata/physio/"), sub, ses, type=".acq"
+            os.path.join(root, "sourcedata/physio/"), sub, ses, ext=".acq"
         )
         nb_expected_runs[ses]["in_file"] = ses_acq_file[ses][0]
 
         ch_name = get_acq_channels(
-            os.path.join(root, "sourcedata/physio/", sub, ses), ses_acq_file[ses][0]
+            os.path.join(root, "sourcedata/physio/"), sub, ses, ses_acq_file[ses][0]
         )
         nb_expected_runs[ses]["ch_name"] = ch_name
 
         vol_in_biopac = volume_counter(
-            os.path.join(root, "sourcedata/physio/"), sub, ses=ses, tr=tr, trigger_ch=trigger_ch
+            os.path.join(root, "sourcedata/physio/"), 
+            sub, 
+            ses=ses, 
+            tr=tr, 
+            trigger_ch=tr_channel,
         )
 
         for i, run in enumerate(vol_in_biopac[ses]):
@@ -256,11 +281,11 @@ def get_info(
     else:
         # If there is a tsv file matching the acq file and the nii.gz files in root
         ses_info = list_sub(
-            os.path.join(root, "sourcedata/physio/"), sub, ses, type=".acq"
+            os.path.join(root, "sourcedata/physio/"), sub, ses, ext=".acq"
         )
 
         ch_name = get_acq_channels(
-            os.path.join(root, "sourcedata/physio/"), ses_info[0]
+            os.path.join(root, "sourcedata/physio/"), sub, ses, ses_info[ses][0]
         )
 
         # iterate through sessions and get _matches.tsv with list_sub dict
@@ -330,6 +355,7 @@ def get_info(
                                 sub,
                                 ses=exp,
                                 tr=tr,
+                                trigger_ch=tr_channel,
                             )
                             print("finished counting volumes in physio file for:", exp)
 
@@ -367,4 +393,4 @@ def get_info(
     return nb_expected_runs
 
 if __name__ == "__main__":
-    get_info()
+    call_get_info()

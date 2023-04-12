@@ -14,9 +14,17 @@ LGR = logging.getLogger(__name__)
 @click.argument('root', type=str)
 @click.argument('sub', type=str)
 @click.option('--ses', type=str, default=None, required=False)
-@click.option('--ext', type=str, default='.acq', required=False)
+@click.option('--ext', type=str, default=".acq", required=False)
 @click.option('--save', type=str, default=None, required=False)
 @click.option('--show', type=bool, default=False, required=False)
+def call_list_sub(root, sub, ses=None, ext=".acq", save=None, show=False):
+    """
+    Call `list_sub` function only if `list_sub.py` is called as CLI
+
+    For parameters description, please refer to the documentation of the `list_sub` function
+    """
+    list_sub(root, sub, ses, ext, save, show)
+
 def list_sub(root, sub, ses=None, ext=".acq", save=None, show=False):
     """
     List a subject's files.
@@ -55,8 +63,12 @@ def list_sub(root, sub, ses=None, ext=".acq", save=None, show=False):
         Dictionary of acqknowledge filenames for each session.
         Returned if `ses` is specified.
 
-    Example :
-    >>> ses_runs = list_sub(root = "/home/user/dataset/", sub = "sub-01")
+    Examples
+    --------
+    In script
+    >>> ses_runs = list_sub(root="/home/user/dataset/", sub="sub-01")
+    In terminal
+    >>> python list_sub.py /home/user/dataset/ sub-01 --ses ses-001 --ext acq --show True
     """
     # Check the subject's
     path_sub = os.path.join(root, sub)
@@ -133,4 +145,4 @@ def list_sub(root, sub, ses=None, ext=".acq", save=None, show=False):
 
 
 if __name__ == "__main__":
-    list_sub()
+    call_list_sub()
