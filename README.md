@@ -1,5 +1,5 @@
 # Physprep workflow
-This standalone repository acts as use-case documentation for physiological data processing steps. The proposed workflow integrates community-based Ptyhon librairies such as [Phys2bids](https://github.com/physiopy/phys2bids) and [Neurokit2](https://github.com/neuropsychology/NeuroKit). 
+This standalone repository acts as use-case documentation for physiological data processing steps. The proposed workflow integrates community-based Ptyhon librairies such as [phys2bids](https://github.com/physiopy/phys2bids) and [neurokit2](https://github.com/neuropsychology/NeuroKit). 
 
 The repo is separated in three main modules, and provides a setp-by-step tutorial for each of them:
 
@@ -9,10 +9,10 @@ The repo is separated in three main modules, and provides a setp-by-step tutoria
 3. `match_acq_bids.py`: match Acqknowledge files (.acq) with the fMRI Nifti files (.nii.gz).
 
 `preproc\`
-1. `convert.py`
-2. `clean.py`
-3. `process.py`
-4. `quality.py`
+1. `convert.py`: use [phys2bids](https://github.com/physiopy/phys2bids) to segment the acqknowledge files in runs following the BIDS format.
+2. `clean.py`: implement functions to filter the physiological signals, and remove the artifacts induced by the MRI.
+3. `process.py`: build a processing pipeline based on `clean.py` functions.
+4. `quality.py`: provide a summary of the quality of the processed signal.
 
 `visu\` :construction_worker:
 
