@@ -10,7 +10,7 @@ The repo is separated in three main modules, and provides a setp-by-step tutoria
 
 `preproc\`
 1. `convert.py`: use [phys2bids](https://github.com/physiopy/phys2bids) to segment the acqknowledge files in runs following the BIDS format.
-2. `clean.py`: implement functions to filter the physiological signals, and remove the artifacts induced by the MRI.
+2. `clean.py`: implement functions to filter the physiological signals, and to remove the artifacts induced by the MRI.
 3. `process.py`: build a processing pipeline based on `clean.py` functions.
 4. `quality.py`: provide a summary of the quality of the processed signal.
 
