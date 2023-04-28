@@ -19,7 +19,7 @@ do
             # 3. the ses id (folder name)
             # 4. the path to save the outputs
             # 5. Boolean to indicate wheter or not the outputs should be saved
-            python neuromod_process.py $SOURCE $SUB $SES $OUTDIR True
+            python process.py $SOURCE $SUB $SES $OUTDIR True
         done
     fi
 done

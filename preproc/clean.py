@@ -314,7 +314,7 @@ def _ecg_clean_bottenhorn(
     # remove baseline wandering
     filtered = nk.signal_filter(ecg_signal, sampling_rate=int(sampling_rate), lowcut=2)
     # Filtering at specific harmonics, with trigger timing info
-    filtered = _comb_band_stop(notches, nyquist, filtered, Q, sampling_rate)
+    filtered = _comb_band_stop(notches, nyquist, filtered, Q)
     # bandpass filtering
     filtered = nk.signal_filter(
         filtered,

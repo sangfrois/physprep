@@ -22,7 +22,7 @@ from neurokit2 import signal_rate, signal_filter
 from neurokit2.signal.signal_formatpeaks import _signal_from_indices
 
 # home brewed cleaning utils
-from neuromod_clean import neuromod_ecg_clean
+from clean import neuromod_ecg_clean
 
 
 def neuromod_bio_process(tsv=None, h5=None, df=None, sampling_rate=10000):
@@ -153,20 +153,20 @@ def neuromod_process_cardiac(
     print("Neurokit processing started")
     if data_type in ["ecg", "ECG"]:
         _, info = ecg_peaks(
-            ecg_cleaned=ecg_cleaned,
+            ecg_cleaned=signal_cleaned,
             sampling_rate=sampling_rate,
             method="nabian2018",
             correct_artifacts=True,
         )
         info[f"{data_type.upper()}_Peaks"] = info[f"{data_type.upper()}_R_Peaks"]
     elif data_type in ["ppg", "PPG"]:
-        info = ppg_findpeaks(ppg_cleaned, sampling_rate=sampling_rate)
+        info = ppg_findpeaks(signal_cleaned, sampling_rate=sampling_rate)
     else:
         print("Please use a valid data type: 'ECG' or 'PPG'")
 
     info[f"{data_type.upper()}_Peaks"] = info[f"{data_type.upper()}_Peaks"].tolist()
     peak_list_nk = _signal_from_indices(
-        info[f"{data_type.upper()}_Peaks"], desired_length=len(ecg_cleaned)
+        info[f"{data_type.upper()}_Peaks"], desired_length=len(signal_cleaned)
     )
     print("Neurokit found peaks")
 
@@ -210,8 +210,8 @@ def neuromod_process_cardiac(
     # Prepare output
     signals = pd.DataFrame(
         {
-            f"{data_type.upper()}_Raw": ecg_signal,
-            f"{data_type.upper()}_Clean": ecg_cleaned,
+            f"{data_type.upper()}_Raw": signal_raw,
+            f"{data_type.upper()}_Clean": signal_cleaned,
             f"{data_type.upper()}_Peaks_NK": peak_list_nk,
             f"{data_type.upper()}_Peaks_Systole": corrected_peaks["clean_peaks"],
             f"{data_type.upper()}_Rate": rate,
@@ -463,8 +463,9 @@ def process_ecg_data(source, sub, ses, outdir, save=True):
         )
         print("--Cleaning the signal---")
         signals, info = neuromod_ecg_process(
-            d["ECG"], d["TTL"], sampling_rate=10000, method="bottenhorn"
+            d["ECG"][0:100000], d["TTL"][0:100000], sampling_rate=10000, method="bottenhorn"
         )
+        
         if save:
             print("Saving processed data")
             signals.to_csv(
@@ -565,7 +566,7 @@ def process_eda_data(source, sub, ses, outdir, save=True):
 
 if __name__ == "__main__":
     # PPG processing pipeline
-    process_ppg_data()
+    #process_ppg_data()
     # ECG processing pipeline
     process_ecg_data()
     # RSP processing pipeline
