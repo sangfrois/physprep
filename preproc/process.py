@@ -206,6 +206,8 @@ def neuromod_process_cardiac(
             ),
         }
     )
+
+    info[f"{data_type.upper()}_R_Peaks"] = info[f"{data_type.upper()}_R_Peaks"].tolist()
     del info[f"{data_type.upper()}_Peaks"]
     # Prepare output
     signals = pd.DataFrame(
@@ -463,7 +465,7 @@ def process_ecg_data(source, sub, ses, outdir, save=True):
         )
         print("--Cleaning the signal---")
         signals, info = neuromod_ecg_process(
-            d["ECG"][0:100000], d["TTL"][0:100000], sampling_rate=10000, method="bottenhorn"
+            d["ECG"], d["TTL"], sampling_rate=10000, method="bottenhorn"
         )
         
         if save:
