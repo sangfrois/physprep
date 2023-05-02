@@ -60,6 +60,9 @@ def sqi_eda(signal, sampling_rate=10000):
     Examples
     --------
     """
+    summary = {}
+    
+    return summary
 
 def sqi_rsp(signal, sampling_rate=10000):
     """
@@ -81,6 +84,9 @@ def sqi_rsp(signal, sampling_rate=10000):
     Examples
     --------
     """
+    summary = {}
+    
+    return summary
 
 def generate_report(sqi_info, save):
     """

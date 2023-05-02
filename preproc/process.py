@@ -206,9 +206,10 @@ def neuromod_process_cardiac(
             ),
         }
     )
+    if data_type in ["ecg", "ECG"]:
+        info[f"{data_type.upper()}_R_Peaks"] = info[f"{data_type.upper()}_R_Peaks"].tolist()
+        del info[f"{data_type.upper()}_Peaks"]
 
-    info[f"{data_type.upper()}_R_Peaks"] = info[f"{data_type.upper()}_R_Peaks"].tolist()
-    del info[f"{data_type.upper()}_Peaks"]
     # Prepare output
     signals = pd.DataFrame(
         {
@@ -223,7 +224,7 @@ def neuromod_process_cardiac(
     return signals, info
 
 
-def neuromod_ppg_process(ppg_raw, sampling_rate=10000):
+def ppg_process(ppg_raw, sampling_rate=10000):
     """
     Process PPG signal.
 
@@ -263,9 +264,7 @@ def neuromod_ppg_process(ppg_raw, sampling_rate=10000):
     return signals, info
 
 
-def neuromod_ecg_process(
-    ecg_raw, trigger_pulse, sampling_rate=10000, method="bottenhorn"
-):
+def ecg_process(ecg_raw, trigger_pulse, sampling_rate=10000, method="bottenhorn"):
     """
     Process ECG signal.
 
@@ -307,7 +306,7 @@ def neuromod_ecg_process(
     return signals, info
 
 
-def neuromod_eda_process():
+def eda_process():
     # TO DO
     return
 
@@ -409,7 +408,7 @@ def process_ppg_data(source, sub, ses, outdir, save=True):
         print(
             f"---Processing PPG signal for {sub} {ses}: run {filenames_tsv[idx][-2:]}---"
         )
-        signals, info = neuromod_ppg_process(d["PPG"], sampling_rate=10000)
+        signals, info = ppg_process(d["PPG"], sampling_rate=10000)
         if save:
             print("Saving processed data")
             signals.to_csv(
@@ -464,7 +463,7 @@ def process_ecg_data(source, sub, ses, outdir, save=True):
             f"---Processing ECG signal for {sub} {ses}: run {filenames_tsv[idx][-2:]}---"
         )
         print("--Cleaning the signal---")
-        signals, info = neuromod_ecg_process(
+        signals, info = ecg_process(
             d["ECG"], d["TTL"], sampling_rate=10000, method="bottenhorn"
         )
         
@@ -472,13 +471,13 @@ def process_ecg_data(source, sub, ses, outdir, save=True):
             print("Saving processed data")
             signals.to_csv(
                 os.path.join(
-                    outdir, sub, ses, f"{filenames_tsv[idx]}" + "_ecg_signals" + ".tsv"
+                    outdir, sub, ses, f"{filenames_tsv[idx]}_ecg_signals.tsv"
                 ),
                 sep="\t",
             )
             with open(
                 os.path.join(
-                    outdir, sub, ses, f"{filenames_tsv[idx]}" + "_ecg_info" + ".json"
+                    outdir, sub, ses, f"{filenames_tsv[idx]}_ecg_info.json"
                 ),
                 "w",
             ) as fp:
@@ -524,7 +523,7 @@ def process_rsp_data(source, sub, ses, outdir, save=True):
             print("Saving processed data")
             signals.to_csv(
                 os.path.join(
-                    outdir, sub, ses, f"{filenames_tsv[idx]}" + "_rsp_signals" + ".tsv"
+                    outdir, sub, ses, f"{filenames_tsv[idx]}_rsp_signals.tsv"
                 ),
                 sep="\t",
             )
@@ -562,13 +561,14 @@ def process_eda_data(source, sub, ses, outdir, save=True):
         print(
             f"---Processing EDA signal for {sub} {ses}: run {filenames_tsv[idx][-2:]}---"
         )
+        signals, info = eda_process(d["EDA"], sampling_rate=10000)
         print("--Cleaning the signal---")
     return
 
 
 if __name__ == "__main__":
     # PPG processing pipeline
-    #process_ppg_data()
+    process_ppg_data()
     # ECG processing pipeline
     process_ecg_data()
     # RSP processing pipeline
