@@ -4,3 +4,4 @@ pandas
 numpy
 pprintpp
 bids
+click
