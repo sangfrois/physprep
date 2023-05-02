@@ -3,6 +3,9 @@
 """Parser for utils."""
 import argparse
 
+"""
+NOTE: eventually remove that script to only rely on click instead of argparse
+"""
 
 def _get_parser():
     """
@@ -11,6 +14,7 @@ def _get_parser():
     Returns
     -------
     parser.parse_args() : argparse dict
+
     Notes
     -----
     # Argument parser follow template provided by RalphyZ.
@@ -78,6 +82,7 @@ def _get_parser2():
     Returns
     -------
     parser.parse_args() : argparse dict
+
     Notes
     -----
     # Argument parser follow template provided by RalphyZ.
@@ -100,7 +105,7 @@ def _get_parser2():
         "--subject",
         dest="sub",
         type=str,
-        help='Specify BIDS subject ID',
+        help="Specify BIDS subject ID",
         default=None,
     )
     optional.add_argument(
@@ -108,7 +113,7 @@ def _get_parser2():
         "--session",
         dest="ses",
         type=str,
-        help='Specify BIDS session ID',
+        help="Specify BIDS session ID",
         default=None,
     )
     optional.add_argument(
@@ -132,6 +137,10 @@ def _get_parser2():
         dest="save",
         help="Specify if you want to save the dictionary",
         default=False,
+    )
+
+    optional.add_argument(
+        "-tr", "--tr", dest="tr", help="Specify the tr value", default=1.49, type=float
     )
     parser._action_groups.append(optional)
 
