@@ -9,7 +9,7 @@ import neurokit2 as nk
 from scipy import signal
 
 
-def neuromod_bio_clean(tsv=None, data=None, h5=None, sampling_rate=1000):
+def neuromod_bio_clean(tsv=None, data=None, h5=None, sampling_rate=1000.):
     """
     Filter biosignals.
 
@@ -20,22 +20,19 @@ def neuromod_bio_clean(tsv=None, data=None, h5=None, sampling_rate=1000):
 
     Parameters
     ----------
-    tsv :
-        directory of BIDSified biosignal recording
-    h5 :
-        directory of h5 file
-    data (optional) :
-        pandas DataFrame object
+    tsv : str
+        The directory of BIDSified biosignal recording.
+    h5 : str
+        The directory of h5 file.
+    data (optional) : Dataframe
+        Biosignals to clean.
+    sampling_rate : float
+        The sampling frequency of `ppg_signal` (in Hz, i.e., samples/second).
+        Defaults to 10000.
     """
-
     # check input and sanitize
-    # if data and tsv is None:
-    # raise ValueError("You have to give at least one of the two \n"
-    # "parameters: tsv or df")
-
     if tsv is not None:
         data = pd.read_csv(tsv, sep="t", compression="gz")
-
     if h5 is not None:
         data = pd.read_hdf(h5, key="bio_df")
         sampling_rate = pd.read_hdf(h5, key="sampling_rate")
@@ -59,14 +56,6 @@ def neuromod_bio_clean(tsv=None, data=None, h5=None, sampling_rate=1000):
         ppg = data["PPG"]
     else:
         ppg = None
-
-    # Keep unkown columns in data
-    cols = ["ECG", "EKG", "PPG", "RSP", "EDA"]
-    keep_keys = [key for key in data.keys() if key not in cols]
-    if len(keep_keys) != 0:
-        keep = data[keep_keys]
-    else:
-        keep = None
 
     # initialize output
     bio_df = pd.DataFrame()
@@ -104,7 +93,7 @@ def neuromod_bio_clean(tsv=None, data=None, h5=None, sampling_rate=1000):
 # Photoplethysmograph (PPG)
 # =======================================================================
 
-def neuromod_ppg_clean(ppg_signal, sampling_rate=10000, method="nabian2018"):
+def neuromod_ppg_clean(ppg_signal, sampling_rate=10000., method="nabian2018"):
     """
     Clean a PPG signal.
 
@@ -114,11 +103,12 @@ def neuromod_ppg_clean(ppg_signal, sampling_rate=10000, method="nabian2018"):
     ----------
     ppg_signal : list, array or Series
         The raw PPG channel.
-    sampling_rate : int
+    sampling_rate : float
         The sampling frequency of `ppg_signal` (in Hz, i.e., samples/second).
         Defaults to 10000.
     method : str
         The processing pipeline to apply. Defaults to 'nabian2018'.
+
     Returns
     -------
     ppg_cleaned : array
@@ -132,7 +122,7 @@ def neuromod_ppg_clean(ppg_signal, sampling_rate=10000, method="nabian2018"):
 # Electrocardiogram (ECG)
 # =======================================================================
 
-def neuromod_ecg_clean(ecg_signal, trigger_pulse, sampling_rate=10000, method="biopac", me=False):
+def neuromod_ecg_clean(ecg_signal, trigger_pulse, sampling_rate=10000., method="biopac", me=False):
     """
     Clean an ECG signal.
 
@@ -144,7 +134,7 @@ def neuromod_ecg_clean(ecg_signal, trigger_pulse, sampling_rate=10000, method="b
         The raw ECG channel.
     trigger_pulse : list, array or Series
         The trigger channel.
-    sampling_rate : int
+    sampling_rate : float
         The sampling frequency of `ecg_signal` (in Hz, i.e., samples/second).
         Default to 10000.
     method : str
@@ -196,13 +186,13 @@ def neuromod_ecg_clean(ecg_signal, trigger_pulse, sampling_rate=10000, method="b
 # =============================================================================
 # ECG internal : Schmidt et al. 2016
 # =============================================================================
-def _ecg_clean_schmidt(ecg_signal, sampling_rate=10000):
+def _ecg_clean_schmidt(ecg_signal, sampling_rate=10000.):
     """
     Parameters
     ----------
     ecg_signal : vector
-        The ECG channel
-    sampling_rate : int
+        The ECG channel.
+    sampling_rate : float
         The sampling frequency of `ecg_signal` (in Hz, i.e., samples/second).
         Default to 10000.
 
@@ -259,18 +249,18 @@ def _ecg_clean_schmidt(ecg_signal, sampling_rate=10000):
 # =============================================================================
 # ECG internal : biopac recommendations
 # =============================================================================
-def _ecg_clean_biopac(timeseries, sampling_rate=10000, tr=1.49, slices=60, Q=100):
+def _ecg_clean_biopac(timeseries, sampling_rate=10000., tr=1.49, slices=60, Q=100):
     """
     Single-band sequence gradient noise reduction.
 
     This function is a reverse-engineered appropriation of BIOPAC's application note 242.
-    It only applies to signals polluted by single-band (f)MRI sequence
+    It only applies to signals polluted by single-band (f)MRI sequence.
 
     Parameters
     ----------
     ecg_signal : array
         The ECG channel.
-    sampling_rate: int
+    sampling_rate: float
         The sampling frequency of `ecg_signal` (in Hz, i.e., samples/second).
         Default to 10000.
     tr : int
@@ -316,7 +306,7 @@ def _ecg_clean_biopac(timeseries, sampling_rate=10000, tr=1.49, slices=60, Q=100
 
 
 def _ecg_clean_bottenhorn(
-    ecg_signal, sampling_rate=10000, tr=1.49, mb=4, slices=60, Q=100
+    ecg_signal, sampling_rate=10000., tr=1.49, mb=4, slices=60, Q=100
 ):
     """
     Multiband sequence gradient noise reduction.
@@ -325,7 +315,7 @@ def _ecg_clean_bottenhorn(
     ----------
     ecg_signal : array
         The ECG channel.
-    sampling_rate : int
+    sampling_rate : float
         The sampling frequency of `ecg_signal` (in Hz, i.e., samples/second).
         Default to 10000.
     tr : float
@@ -372,7 +362,7 @@ def _ecg_clean_bottenhorn(
 # =============================================================================
 # EDA
 # =============================================================================
-def _eda_clean_bottenhorn(eda_signal, sampling_rate=10000, mb=4, tr=1.49, slices=60, Q=100):
+def _eda_clean_bottenhorn(eda_signal, sampling_rate=10000., mb=4, tr=1.49, slices=60, Q=100):
     """
     Multiband sequence gradient noise reduction.
 
@@ -380,7 +370,7 @@ def _eda_clean_bottenhorn(eda_signal, sampling_rate=10000, mb=4, tr=1.49, slices
     ----------
     eda_signal : array
         The EDA channel.
-    sampling_rate : int
+    sampling_rate : float
         The sampling frequency of `ecg_signal` (in Hz, i.e., samples/second).
         Default to 10000.
     tr : float
@@ -416,6 +406,8 @@ def _eda_clean_bottenhorn(eda_signal, sampling_rate=10000, mb=4, tr=1.49, slices
             Q,
             sampling_rate,
         )
+    
+    return eda_clean
 
 
 # =============================================================================
@@ -424,20 +416,34 @@ def _eda_clean_bottenhorn(eda_signal, sampling_rate=10000, mb=4, tr=1.49, slices
 
 def _comb_band_stop(notches, nyquist, filtered, Q):
     """
-    A serie of notch filters aligned with the scanner gradient's harmonics
+    A serie of notch filters aligned with the scanner gradient's harmonics.
     
     Parameters
     ----------
-    notches : 
-    nyquist : 
-    filtered : 
-    Q : 
+    notches : dict
+        Frequencies to use in the IIR notch filter.
+    nyquist : float
+        The Nyquist frequency.
+    filtered : array
+        Data to be filtered.
+    Q : int
+        The filter quality factor.
+
+    Returns
+    -------
+    filtered : array
+        The filtered signal.
 
     References
     ----------
     Biopac Systems, Inc. Application Notes: application note 242
         ECG Signal Processing During fMRI
         https://www.biopac.com/wp-content/uploads/app242x.pdf
+
+    See also
+    --------
+    https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.filtfilt.html
+    https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.iirnotch.html
     """
     # band stoping each frequency specified with notches dict
     for notch in notches:
@@ -449,20 +455,68 @@ def _comb_band_stop(notches, nyquist, filtered, Q):
     return filtered
 
 
-def _butter_highpass(cutoff, fs, order=5):
+def _butter_highpass(cutoff, sampling_rate, order=5):
     """
-    reference: https://github.com/62442katieb/mbme-physio-denoising/blob/main/notebooks/denoising_eda.ipynb
+    Parameters
+    ----------
+    cutoff : float
+        Frequency to use for the Butterworth filter. The cutoff is divided
+        by the Nyquist frequency. The quotient is used as the critical frequency.
+    sampling_rate : float
+        The sampling frequency of `data` (in Hz, i.e., samples/second).
+    order : int
+        Order of the filter.
+        Default to 5.
+
+    Returns
+    -------
+    a : array
+        Denominator polynomials of the IIR filter.
+    b : array
+        Numerator polynomials of the IIR filter.
+
+    References
+    ----------
+    https://github.com/62442katieb/mbme-physio-denoising/blob/main/notebooks/denoising_eda.ipynb
+
+    See also
+    --------
+    https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.butter.html 
     """
-    nyq = 0.5 * fs
+    nyq = 0.5 * sampling_rate
     normal_cutoff = cutoff / nyq
     b, a = signal.butter(order, normal_cutoff, btype="high", analog=False)
     return b, a
 
 
-def _butter_highpass_filter(data, cutoff, fs, order=5):
+def _butter_highpass_filter(filtered, cutoff, sampling_rate, order=5):
     """
-    reference: https://github.com/62442katieb/mbme-physio-denoising/blob/main/notebooks/denoising_eda.ipynb
+    Parameters
+    ----------
+    filtered : array
+        Data to be filtered.
+    cutoff : float
+        Frequency to use for the Butterworth filter. The cutoff is divided
+        by the Nyquist frequency. The quotient is used as the critical frequency.
+    sampling_rate : float
+        The sampling frequency of `filtered` (in Hz, i.e., samples/second).
+    order : int
+        Order of the filter.
+        Default to 5.
+
+    Returns
+    -------
+    y : array
+        The filtered signal.
+
+    References
+    ----------
+    https://github.com/62442katieb/mbme-physio-denoising/blob/main/notebooks/denoising_eda.ipynb
+
+    See also
+    --------
+    https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.filtfilt.html 
     """
-    b, a = _butter_highpass(cutoff, fs, order=order)
-    y = signal.filtfilt(b, a, data)
+    b, a = _butter_highpass(cutoff, sampling_rate, order=order)
+    y = signal.filtfilt(b, a, filtered)
     return y
