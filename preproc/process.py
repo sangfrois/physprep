@@ -373,13 +373,28 @@ def load_segmented_runs(source, sub, ses):
 
     return data_tsv, filenames
 
-
 @click.command()
 @click.argument("source", type=str)
 @click.argument("sub", type=str)
 @click.argument("ses", type=str)
 @click.argument("outdir", type=str)
 @click.argument("save", type=bool)
+@click.argument("data_type", default=None)
+def process_physio_data():
+    data_type = [d.upper() for d in json.loads(data_type)]
+    # PPG processing pipeline
+    if "PPG" in data_type:
+        process_ppg_data(source, sub, ses, outdir, save)
+    # ECG processing pipeline
+    if "ECG" in data_type:
+        process_ecg_data(source, sub, ses, outdir, save)
+    # RSP processing pipeline
+    if "RSP" in data_type:
+        process_rsp_data(source, sub, ses, outdir, save)
+    # EDA processing pipeline
+    if "EDA" in data_type:
+        process_eda_data(source, sub, ses, outdir, save)
+
 def process_ppg_data(source, sub, ses, outdir, save=True):
     """
     Parameters
@@ -427,13 +442,6 @@ def process_ppg_data(source, sub, ses, outdir, save=True):
 
     return signals, info
 
-
-@click.command()
-@click.argument("source", type=str)
-@click.argument("sub", type=str)
-@click.argument("ses", type=str)
-@click.argument("outdir", type=str)
-@click.argument("save", type=bool)
 def process_ecg_data(source, sub, ses, outdir, save=True):
     """
     Parameters
@@ -485,13 +493,6 @@ def process_ecg_data(source, sub, ses, outdir, save=True):
 
     return signals, info
 
-
-@click.command()
-@click.argument("source", type=str)
-@click.argument("sub", type=str)
-@click.argument("ses", type=str)
-@click.argument("outdir", type=str)
-@click.argument("save", type=bool)
 def process_rsp_data(source, sub, ses, outdir, save=True):
     """
     Parameters
@@ -530,13 +531,6 @@ def process_rsp_data(source, sub, ses, outdir, save=True):
 
     return signals
 
-
-@click.command()
-@click.argument("source", type=str)
-@click.argument("sub", type=str)
-@click.argument("ses", type=str)
-@click.argument("outdir", type=str)
-@click.argument("save", type=bool)
 def process_eda_data(source, sub, ses, outdir, save=True):
     """
     Parameters
@@ -565,13 +559,6 @@ def process_eda_data(source, sub, ses, outdir, save=True):
         print("--Cleaning the signal---")
     return
 
-
 if __name__ == "__main__":
-    # PPG processing pipeline
-    process_ppg_data()
-    # ECG processing pipeline
-    process_ecg_data()
-    # RSP processing pipeline
-    process_rsp_data()
-    # EDA processing pipeline
-    # TO DO
+    # Physio processing pipeline
+    process_physio_data()
