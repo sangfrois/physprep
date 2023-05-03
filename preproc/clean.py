@@ -188,6 +188,9 @@ def neuromod_ecg_clean(ecg_signal, trigger_pulse, sampling_rate=10000., method="
 # =============================================================================
 def _ecg_clean_schmidt(ecg_signal, sampling_rate=10000.):
     """
+    Cleaning the ECG signal based on the method described in Schmidt et al., 2016
+    using Wilcoxon filter.
+
     Parameters
     ----------
     ecg_signal : vector
@@ -334,10 +337,10 @@ def _ecg_clean_bottenhorn(
 
     References
     ----------
-        Bottenhorn, K. L., Salo, T., Riedel, M. C., Sutherland, M. T., Robinson, J. L.,
-            Musser, E. D., & Laird, A. R. (2021). Denoising physiological data collected 
-            during multi-band, multi-echo EPI sequences. bioRxiv, 2021-04.
-            https://doi.org/10.1101/2021.04.01.437293
+    Bottenhorn, K. L., Salo, T., Riedel, M. C., Sutherland, M. T., Robinson, J. L.,
+        Musser, E. D., & Laird, A. R. (2021). Denoising physiological data collected 
+        during multi-band, multi-echo EPI sequences. bioRxiv, 2021-04.
+        https://doi.org/10.1101/2021.04.01.437293
     """
     # Setting scanner sequence parameters
     nyquist = np.float64(sampling_rate / 2)
