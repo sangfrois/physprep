@@ -104,7 +104,6 @@ def neuromod_bio_clean(tsv=None, data=None, h5=None, sampling_rate=1000):
 # Photoplethysmograph (PPG)
 # =======================================================================
 
-
 def neuromod_ppg_clean(ppg_signal, sampling_rate=10000, method="nabian2018"):
     """
     Clean a PPG signal.
@@ -133,10 +132,7 @@ def neuromod_ppg_clean(ppg_signal, sampling_rate=10000, method="nabian2018"):
 # Electrocardiogram (ECG)
 # =======================================================================
 
-
-def neuromod_ecg_clean(
-    ecg_signal, trigger_pulse, sampling_rate=10000.0, method="biopac", me=False
-):
+def neuromod_ecg_clean(ecg_signal, trigger_pulse, sampling_rate=10000, method="biopac", me=False):
     """
     Clean an ECG signal.
 
@@ -147,14 +143,18 @@ def neuromod_ecg_clean(
     ecg_signal : list, array or Series
         The raw ECG channel.
     trigger_pulse : list, array or Series
-        Trigger channel.
+        The trigger channel.
     sampling_rate : int
         The sampling frequency of `ecg_signal` (in Hz, i.e., samples/second).
-        Defaults to 10000.
+        Default to 10000.
     method : str
-        The processing pipeline to apply. Defaults to 'biopac'.
+        The processing pipeline to apply between 'biopac' and 'bottenhorn'.
+        Default to 'biopac'.
     me : bool
-        Specify if the MRI sequence used was the multi-echo (True) or the single-echo (False). Defaults to False.
+        Specify if the MRI sequence used was the multi-echo (True) 
+        or the single-echo (False). 
+        Default to False.
+
     Returns
     -------
     clean : array
@@ -196,13 +196,27 @@ def neuromod_ecg_clean(
 # =============================================================================
 # ECG internal : Schmidt et al. 2016
 # =============================================================================
-def _ecg_clean_schmidt(ecg_signal, sampling_rate=16000):
+def _ecg_clean_schmidt(ecg_signal, sampling_rate=10000):
     """
-    from Schmidt, M., Krug, J. W., & Rose, G. (2016).
-    Reducing of gradient induced artifacts on the ECG signal during MRI
-    examinations using Wilcoxon filter.
-    Current Directions in Biomedical Engineering.
-    https://doi.org/10.1515/cdbme-2016-0040
+    Parameters
+    ----------
+    ecg_signal : vector
+        The ECG channel
+    sampling_rate : int
+        The sampling frequency of `ecg_signal` (in Hz, i.e., samples/second).
+        Default to 10000.
+
+    Returns
+    -------
+    ecg_clean : array
+        The cleaned ECG signal.
+
+    Reference
+    ---------
+    Schmidt, M., Krug, J. W., & Rose, G. (2016).Reducing of gradient induced 
+        artifacts on the ECG signal during MRI examinations using Wilcoxon filter.
+        Current Directions in Biomedical Engineering.
+        https://doi.org/10.1515/cdbme-2016-0040
     """
     # enveloppe at least 100 ms in samples
     env = int(0.01 * sampling_rate)
@@ -245,7 +259,7 @@ def _ecg_clean_schmidt(ecg_signal, sampling_rate=16000):
 # =============================================================================
 # ECG internal : biopac recommendations
 # =============================================================================
-def _ecg_clean_biopac(timeseries, sampling_rate=10000.0, tr=1.49, slices=60, Q=100):
+def _ecg_clean_biopac(timeseries, sampling_rate=10000, tr=1.49, slices=60, Q=100):
     """
     Single-band sequence gradient noise reduction.
 
@@ -253,45 +267,44 @@ def _ecg_clean_biopac(timeseries, sampling_rate=10000.0, tr=1.49, slices=60, Q=1
     It only applies to signals polluted by single-band (f)MRI sequence
 
     Parameters
-    -----------
-    timeseries : pd.DataFrame
-        - ECG signal
-        - TTL
-    sampling_rate: float
-        sampling frequency
+    ----------
+    ecg_signal : array
+        The ECG channel.
+    sampling_rate: int
+        The sampling frequency of `ecg_signal` (in Hz, i.e., samples/second).
+        Default to 10000.
     tr : int
-        Time Repetitiion of scanner
+        The time Repetition of the MRI scanner.
     slices :
-        nb of volumes acquired in the tr period
+        The number of volumes acquired in the tr period.
     Q : int
-        filter quality factor
+        The filter quality factor.
+
     Returns
-    ---------
-    filtered : array
-        the filtered sign
+    -------
+    ecg_clean : array
+        The cleaned ECG signal.
+
     References
-    -----------
+    ----------
     Biopac Systems, Inc. Application Notes: application note 242
-    ECG Signal Processing During fMRI
-    https://www.biopac.com/wp-content/uploads/app242x.pdf
+        ECG Signal Processing During fMRI
+        https://www.biopac.com/wp-content/uploads/app242x.pdf
     """
     # Setting scanner sequence parameters
     nyquist = np.float64(sampling_rate / 2)
     notches = {"slices": slices / tr, "tr": 1 / tr}
-    # find trigger timing
-    triggers = timeseries[timeseries["Trigger"] > 4].index.values
-    print(triggers)
     # remove baseline wandering
-    filtered = nk.signal_filter(
-        timeseries["ECG"][triggers[1] : triggers[-1]],
+    ecg_clean = nk.signal_filter(
+        ecg_signal,
         sampling_rate=int(sampling_rate),
         lowcut=2,
     )
     # Filtering at specific harmonics, with trigger timing info
-    filtered = _comb_band_stop(notches, nyquist, filtered, Q, sampling_rate)
+    ecg_clean = _comb_band_stop(notches, nyquist, ecg_clean, Q, sampling_rate)
     # bandpass filtering
-    filtered = nk.signal_filter(
-        filtered,
+    ecg_clean = nk.signal_filter(
+        ecg_clean,
         sampling_rate=sampling_rate,
         lowcut=2,
         highcut=20,
@@ -299,25 +312,53 @@ def _ecg_clean_biopac(timeseries, sampling_rate=10000.0, tr=1.49, slices=60, Q=1
         order=5,
     )
 
-    return filtered
+    return ecg_clean
 
 
 def _ecg_clean_bottenhorn(
-    ecg_signal, sampling_rate=10000.0, tr=1.49, mb=4, slices=60, Q=100
+    ecg_signal, sampling_rate=10000, tr=1.49, mb=4, slices=60, Q=100
 ):
     """
-    https://github.com/62442katieb/mbme-physio-denoising/blob/main/notebooks/denoising_eda.ipynb
+    Multiband sequence gradient noise reduction.
+
+    Parameters
+    ----------
+    ecg_signal : array
+        The ECG channel.
+    sampling_rate : int
+        The sampling frequency of `ecg_signal` (in Hz, i.e., samples/second).
+        Default to 10000.
+    tr : float
+        The time Repetition of the MRI scanner.
+    mb : 4
+        The multiband acceleration factor.
+    slices : int
+        The number of volumes acquired in the tr period.
+    Q : int
+        The filter quality factor.
+
+    Returns
+    -------
+    ecg_clean : array
+        The cleaned ECG signal.
+
+    References
+    ----------
+        Bottenhorn, K. L., Salo, T., Riedel, M. C., Sutherland, M. T., Robinson, J. L.,
+            Musser, E. D., & Laird, A. R. (2021). Denoising physiological data collected 
+            during multi-band, multi-echo EPI sequences. bioRxiv, 2021-04.
+            https://doi.org/10.1101/2021.04.01.437293
     """
     # Setting scanner sequence parameters
     nyquist = np.float64(sampling_rate / 2)
     notches = {"slices": slices / mb / tr, "tr": 1 / tr}
     # remove baseline wandering
-    filtered = nk.signal_filter(ecg_signal, sampling_rate=int(sampling_rate), lowcut=2)
+    ecg_clean = nk.signal_filter(ecg_signal, sampling_rate=int(sampling_rate), lowcut=2)
     # Filtering at specific harmonics, with trigger timing info
-    filtered = _comb_band_stop(notches, nyquist, filtered, Q)
+    ecg_clean = _comb_band_stop(notches, nyquist, ecg_clean, Q)
     # bandpass filtering
-    filtered = nk.signal_filter(
-        filtered,
+    ecg_clean = nk.signal_filter(
+        ecg_clean,
         sampling_rate=sampling_rate,
         lowcut=2,
         highcut=20,
@@ -325,16 +366,44 @@ def _ecg_clean_bottenhorn(
         order=5,
     )
 
-    return filtered
+    return ecg_clean
 
 
 # =============================================================================
 # EDA
 # =============================================================================
-def _eda_clean_bottenhorn(
-    eda_signal, sampling_rate=10000.0, Q=100, mb=4, tr=1.49, slices=60
-):
+def _eda_clean_bottenhorn(eda_signal, sampling_rate=10000, mb=4, tr=1.49, slices=60, Q=100):
+    """
+    Multiband sequence gradient noise reduction.
 
+    Parameters
+    ----------
+    eda_signal : array
+        The EDA channel.
+    sampling_rate : int
+        The sampling frequency of `ecg_signal` (in Hz, i.e., samples/second).
+        Default to 10000.
+    tr : float
+        The time Repetition of the MRI scanner.
+    mb : int
+        The multiband acceleration factor.
+    slices : int
+        The number of volumes acquired in the tr period.
+    Q : int
+        The filter quality factor.
+
+    Returns
+    -------
+    eda_clean : array
+        The cleaned EDA signal.
+
+    References
+    ----------
+    Bottenhorn, K. L., Salo, T., Riedel, M. C., Sutherland, M. T., Robinson, J. L.,
+        Musser, E. D., & Laird, A. R. (2021). Denoising physiological data collected 
+        during multi-band, multi-echo EPI sequences. bioRxiv, 2021-04.
+        https://doi.org/10.1101/2021.04.01.437293
+    """
     notches = {"slices": slices / mb / tr, "tr": 1 / tr}
 
     # hp_eda = butter_highpass_filter(scan1['EDA'], 1, fs, order=5)
@@ -353,14 +422,22 @@ def _eda_clean_bottenhorn(
 # General functions
 # =============================================================================
 
-
 def _comb_band_stop(notches, nyquist, filtered, Q):
     """
     A serie of notch filters aligned with the scanner gradient's harmonics
+    
+    Parameters
+    ----------
+    notches : 
+    nyquist : 
+    filtered : 
+    Q : 
 
+    References
+    ----------
     Biopac Systems, Inc. Application Notes: application note 242
-    ECG Signal Processing During fMRI
-    https://www.biopac.com/wp-content/uploads/app242x.pdf
+        ECG Signal Processing During fMRI
+        https://www.biopac.com/wp-content/uploads/app242x.pdf
     """
     # band stoping each frequency specified with notches dict
     for notch in notches:

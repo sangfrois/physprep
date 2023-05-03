@@ -271,7 +271,7 @@ def ecg_process(ecg_raw, trigger_pulse, sampling_rate=10000, method="bottenhorn"
     Custom processing for neuromod ECG acquisition.
 
     Parameters
-    -----------=
+    -----------
     ecg_raw : vector
         The raw ECG channel.
     sampling_rate : int
@@ -279,7 +279,7 @@ def ecg_process(ecg_raw, trigger_pulse, sampling_rate=10000, method="bottenhorn"
         Default to 10000.
     method : str
         The processing pipeline to apply.
-        Default to 'fmri'.
+        Default to 'bottenhorn'.
 
     Returns
     -------
