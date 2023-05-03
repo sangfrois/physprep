@@ -25,21 +25,22 @@ from neurokit2.signal.signal_formatpeaks import _signal_from_indices
 from clean import neuromod_ecg_clean
 
 
-def neuromod_bio_process(tsv=None, h5=None, df=None, sampling_rate=10000):
+def neuromod_bio_process(tsv=None, h5=None, df=None, sampling_rate=10000.):
     """
     Process biosignals.
 
     Parameters
     ----------
     tsv : str
-        Directory of BIDSified biosignal recording
+        The directory of BIDSified biosignal recording.
     h5 : str
         Default to None
     df : DataFrame
         pandas DataFrame object
-        Default to None
-    sampling_rate : int
-        Default to 10000
+        Default to None.
+    sampling_rate : float
+        The sampling frequency of the data (in Hz, i.e., samples/second).
+        Default to 10000.
 
     Returns
     -------
@@ -106,22 +107,23 @@ def neuromod_process_cardiac(
     signal_raw, signal_cleaned, sampling_rate=10000, data_type="PPG"
 ):
     """
-    Process cardiac signal
+    Process cardiac signal.
 
-    Extract features of interest for neuromod project
+    Extract features of interest for neuromod project.
 
     Parameters
     ----------
     signal_raw : array
-        Raw PPG/ECG signal
+        Raw PPG/ECG signal.
     signal_cleaned : array
-        Cleaned PPG/ECG signal
+        Cleaned PPG/ECG signal.
     sampling_rate : int
         The sampling frequency of `signal_raw` (in Hz, i.e., samples/second).
         Defaults to 10000.
     data_type : str
-        Precise the type of signal to be processed. The function currently support PPG and ECG signal processing
-        Default to 'PPG'
+        Precise the type of signal to be processed. The function currently 
+        support PPG and ECG signal processing.
+        Default to 'PPG'.
     Returns
     -------
     signals : DataFrame
@@ -131,7 +133,7 @@ def neuromod_process_cardiac(
         - the heart rate as measured based on PPG/ECG peaks.
         - the PPG/ECG peaks marked as "1" in a list of zeros.
     info : dict
-        containing list of intervals between peaks
+        Dictionary containing list of intervals between peaks.
     """
     # heartpy
     print("HeartPy processing started")
@@ -228,7 +230,7 @@ def ppg_process(ppg_raw, sampling_rate=10000):
     """
     Process PPG signal.
 
-    Custom processing function for neuromod PPG acquisition
+    Custom processing function for neuromod PPG acquisition.
 
     Parameters
     ----------
@@ -247,7 +249,7 @@ def ppg_process(ppg_raw, sampling_rate=10000):
         - *"PPG_Rate"*: the heart rate as measured based on PPG peaks.
         - *"PPG_Peaks"*: the PPG peaks marked as "1" in a list of zeros.
     info : dict
-        containing list of intervals between peaks
+        Dictionary containing list of intervals between peaks.
     """
     ppg_signal = as_vector(ppg_raw)
 
@@ -289,7 +291,7 @@ def ecg_process(ecg_raw, trigger_pulse, sampling_rate=10000, method="bottenhorn"
         - *"ECG_Clean"*: the cleaned signal.
         - *"ECG_Rate"*: the heart rate as measured based on PPG peaks.
     info : dict
-        containing list of peaks
+        Dictionary containing list of peaks.
     """
     ecg_signal = as_vector(ecg_raw)
 
@@ -316,12 +318,12 @@ def load_json(filename):
     Parameters
     ----------
     filename : str
-        File path of the .json to load
+        File path of the .json to load.
 
     Returns
     -------
     data : dict
-        Dictionary with the content of the .json passed in argument
+        Dictionary with the content of the .json passed in argument.
     """
     tmp = open(filename)
     data = json.load(tmp)
@@ -335,18 +337,18 @@ def load_segmented_runs(source, sub, ses):
     Parameters
     ----------
     source : str
-        main directory contaning the segmented runs
+        The main directory contaning the segmented runs.
     sub : str
-        id of the subject
+        The id of the subject.
     ses : str
-        id of the session
+        The id of the session.
 
     Returns
     -------
     data_tsv : list
-        list containing dataframes with the raw signal for each run
+        List containing dataframes with the raw signal for each run.
     filenames : list
-        list contaning the filename for each segmented run without the extension
+        List contaning the filename for each segmented run without the extension.
     """
     data_tsv, filenames = [], []
     files_tsv = [f for f in os.listdir(os.path.join(source, sub, ses)) if "tsv.gz" in f]
@@ -380,7 +382,30 @@ def load_segmented_runs(source, sub, ses):
 @click.argument("outdir", type=str)
 @click.argument("save", type=bool)
 @click.argument("data_type", default=None)
-def process_physio_data():
+def process_physio_data(source, sub, ses, outdir, save, data_type):
+    """
+    Run processing pipeline on specified biosignals.
+
+    Parameters
+    ----------
+    source : str
+        The main directory contaning the segmented runs.
+    sub : str
+        The id of the subject.
+    ses : str
+        The id of the session.
+    outdir : str
+        The directory to save the outputs.
+    save : bool
+        Indicate if the outputs should be saved or not.
+    data_type : list
+        The list of the channels to process.
+
+    Examples
+    --------
+    In terminal
+    >>> python process.py /home/user/dataset/converted/ sub-01 ses-001 /home/user/dataset/derivatives/ True ["PPG", "ECG", "RSP", "EDA"]
+    """
     data_type = [d.upper() for d in json.loads(data_type)]
     # PPG processing pipeline
     if "PPG" in data_type:
@@ -400,23 +425,23 @@ def process_ppg_data(source, sub, ses, outdir, save=True):
     Parameters
     ----------
     source : str
-        main directory contaning the segmented runs
+        The main directory contaning the segmented runs.
     sub : str
-        id of the subject
+        The id of the subject.
     ses : str
-        id of the session
+        The id of the session.
     outdir : str
-        directory to save the outputs
+        The directory to save the outputs.
     save : bool
-        indicate if the outputs should be saved or not 
-        Default to True
+        Indicate if the outputs should be saved or not.
+        Default to True.
 
     Returns
     -------
     signals : DataFrame
-        Dataframe containing the signal cleaned and processed
+        Dataframe containing the signal cleaned and processed.
     info : dict
-        Dictionnary containing the info of peaks and sampling rate
+        Dictionnary containing the info of peaks and sampling rate.
     """
     data_tsv, filenames_tsv = load_segmented_runs(source, sub, ses)
     for idx, d in enumerate(data_tsv):
@@ -498,21 +523,21 @@ def process_rsp_data(source, sub, ses, outdir, save=True):
     Parameters
     ----------
     source : str
-        main directory contaning the segmented runs
+        The main directory contaning the segmented runs.
     sub : str
-        id of the subject
+        The id of the subject.
     ses : str
-        id of the session
+        The id of the session.
     outdir : str
-        directory to save the outputs
+        The directory to save the outputs.
     save : bool
-        indicate if the outputs should be saved or not 
-        Default to True
+        Indicate if the outputs should be saved or not.
+        Default to True.
 
     Returns
     -------
     signals : DataFrame
-        Dataframe containing the signal cleaned and processed
+        Dataframe containing the signal cleaned and processed.
     """
     data_tsv, filenames_tsv = load_segmented_runs(source, sub, ses)
     for idx, d in enumerate(data_tsv):
@@ -536,16 +561,16 @@ def process_eda_data(source, sub, ses, outdir, save=True):
     Parameters
     ----------
     source : str
-        main directory contaning the segmented runs
+        The main directory contaning the segmented runs.
     sub : str
-        id of the subject
+        The id of the subject.
     ses : str
-        id of the session
+        The id of the session.
     outdir : str
-        directory to save the outputs
+        The directory to save the outputs.
     save : bool
-        indicate if the outputs should be saved or not 
-        Default to True
+        Indicate if the outputs should be saved or not.
+        Default to True.
 
     Returns
     -------
