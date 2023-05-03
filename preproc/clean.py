@@ -450,7 +450,7 @@ def _comb_band_stop(notches, nyquist, filtered, Q):
     """
     # band stoping each frequency specified with notches dict
     for notch in notches:
-        for i in np.arange(1, (nyquist / notches[notch])):
+        for i in np.arange(1, int(nyquist / notches[notch])):
             f0 = notches[notch] * i
             w0 = f0 / nyquist
             b, a = signal.iirnotch(w0, Q)
@@ -463,8 +463,9 @@ def _butter_highpass(cutoff, sampling_rate, order=5):
     Parameters
     ----------
     cutoff : float
-        Frequency to use for the Butterworth filter. The cutoff is divided
-        by the Nyquist frequency. The quotient is used as the critical frequency.
+        Frequency to use for the Butterworth filter. The normalized frequency is
+        obtain by dividing the cutoff by the Nyquist frequency, and is used as the 
+        critical frequency in the butterworth filter.
     sampling_rate : float
         The sampling frequency of `data` (in Hz, i.e., samples/second).
     order : int
