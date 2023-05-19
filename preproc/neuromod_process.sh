@@ -2,6 +2,7 @@
 
 SOURCE="/scratch/mepicard/physio_data/emotionvideos"
 OUTDIR="/scratch/mepicard/physio_data/emotionvideos/processed"
+MBME=True
 
 #Examples: python process.py $SOURCE sub-02 ses-004 $OUTDIR True True
 
@@ -21,7 +22,8 @@ do
             # 3. the ses id (folder name)
             # 4. the path to save the outputs
             # 5. Boolean to indicate wheter or not the outputs should be saved
-            python process.py $SOURCE $SUB $SES $OUTDIR True
+            python process.py $SOURCE $SUB $SES $OUTDIR True $MBME
+            python quality.py $OUTDIR $SUB $SES $OUTDIR 
         done
     fi
 done
