@@ -111,8 +111,6 @@ def neuromod_bio_process(source, sub, ses, outdir, save, multi_echo):
         # return a dataframe
         bio_df["time"] = df["time"]
 
-        breakpoint()
-
         print("***Saving processed biosignals***")
         bio_df.to_csv(
             os.path.join(
