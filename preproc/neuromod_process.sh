@@ -3,6 +3,8 @@
 SOURCE="/scratch/mepicard/physio_data/emotionvideos"
 OUTDIR="/scratch/mepicard/physio_data/emotionvideos/processed"
 
+#Examples: python process.py $SOURCE sub-02 ses-004 $OUTDIR True True
+
 for dir in $SOURCE/*/
 do
     #Iterate over sub folders
