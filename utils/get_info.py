@@ -153,9 +153,9 @@ def get_acq_channels(root, sub, ses, acq_file):
             ch_name.append("PPG")
         elif "ECG" in ch.name:
             ch_name.append("ECG")
-        elif "HLT" in ch.name:
+        elif "A 5" in ch.name:
             ch_name.append("TTL")
-        elif "DA100C" == ch.name:
+        elif "DA100C" in ch.name or "A 6" in ch.name:
             ch_name.append("RSP")
         elif "EDA" in ch.name:
             ch_name.append("EDA")
