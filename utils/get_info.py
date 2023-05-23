@@ -228,7 +228,6 @@ def get_info(root, sub, ses=None, count_vol=False, show=True, save=None, tr=None
         tasks = []
         matches = glob.glob(os.path.join(root, sub, exp, "func", "*bold.json"))
         matches.sort()
-        print(matches)
         # iterate through _bold.json
         for idx, filename in enumerate(matches):
             task = filename.rfind(f"{exp}_") + 8
@@ -239,9 +238,7 @@ def get_info(root, sub, ses=None, count_vol=False, show=True, save=None, tr=None
             with open(filename) as f:
                 bold = json.load(f)
             # we want to GET THE NB OF VOLUMES in the _bold.json of a given run
-            nb_expected_volumes_run[f"{idx+1:02d}"] = bold["time"]["samples"][
-                "AcquisitionNumber"
-            ][-1]
+            nb_expected_volumes_run[f"{idx+1:02d}"] = bold["dcmmeta_shape"][-1]
             # we want to have the TR in a _bold.json to later use it in the volume_counter function
             tr = bold["RepetitionTime"]
 
