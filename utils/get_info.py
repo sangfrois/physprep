@@ -217,7 +217,7 @@ def get_info(root, sub, ses=None, count_vol=False, show=True, save=None, tr=None
         os.path.join(root, "sourcedata/physio/"), sub, ses, ext=".acq"
     )
     # iterate through sessions and get _matches.tsv with list_sub dict
-    for exp in ses_runs_matches:
+    for exp in sorted(ses_runs_matches):
         print(exp)
         if ses_info[exp] == []:
             print('No acq file found for this session')
