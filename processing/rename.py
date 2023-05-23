@@ -9,10 +9,10 @@ import click
 import os
 import logging
 
-click.command()
-click.argument("indir", type=click.Path(exists=True), required=True)
-click.argument("sub", type=str, required=True)
-click.argument("sessions", type=str, nargs="*")
+@click.command()
+@click.argument("indir", type=click.Path(exists=True), required=True)
+@click.argument("sub", type=str, required=True)
+@click.option("sessions", type=str, nargs="*")
 def co_register_physio(indir, sub, sessions=None):
     """
     Comply to BIDS and co-register functional acquisitions.
@@ -89,7 +89,6 @@ def co_register_physio(indir, sub, sessions=None):
 
         # if input is normal, then check co-registration
         else:
-
             to_be_del = []
 
             # remove files that don't contain enough volumes
