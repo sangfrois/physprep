@@ -37,7 +37,7 @@ from clean import neuromod_ecg_clean, neuromod_eda_clean, neuromod_ppg_clean
 @click.argument("outdir", type=str)
 @click.argument("save", type=bool)
 @click.argument("multi_echo", type=bool)
-def neuromod_bio_process(source, sub, ses, outdir, save, multi_echo): 
+def neuromod_bio_process(source, sub, ses, outdir, multi_echo): 
     """
     Run processing pipeline on specified biosignals.
 
@@ -51,8 +51,6 @@ def neuromod_bio_process(source, sub, ses, outdir, save, multi_echo):
         The id of the session.
     outdir : str
         The directory to save the outputs.
-    save : bool
-        Indicate if the outputs should be saved or not.
     multi_echo : bool
         Indicate if the multi-echo sequence was used or not.
 

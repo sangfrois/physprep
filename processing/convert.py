@@ -9,6 +9,7 @@ import click
 import logging
 import pandas as pd
 from phys2bids.phys2bids import phys2bids
+import glob
 
 import sys
 sys.path.append("../utils")
@@ -30,7 +31,7 @@ def call_convert(root, save, sub, ses=None, tr=None, ch_name=None):
         ch_name = json.loads(ch_name)
     convert(root, save, sub, ses, tr, ch_name)
 
-def convert(root, save, sub, ses=None, tr=None, ch_name=None):
+def convert(root, save, sub, ses=None, tr=None, ch_name=None, overwrite=False):
     """
     Phys2Bids conversion for one subject data
 
@@ -72,11 +73,18 @@ def convert(root, save, sub, ses=None, tr=None, ch_name=None):
     logger.info(f"Reading fetcher:\n{os.path.join(root, sub, fetcher)}")
     info = pd.read_json(os.path.join(root, sub, f"{sub}_volumes_all-ses-runs.json"))
     # define sessions
-    if ses is None:
-        ses = info.columns
+    if sessions is None:
+        sessions = sorted(list(info.columns))
+        # Remove the sessions that are already processed 
+        if overwrite is False:
+            existing = [str(d[-8:-1]) for d in glob.glob(f"{root}{sub}/*/")]
+            setA = set(sessions)
+            # Get new set with elements that are only in sessions but not in existing
+            sessions = sorted(list(setA.difference(existing)))
+    
     elif isinstance(ses, list) is False:
         ses = [ses]
-    # Define ch_name
+    # Define ch_name and trigger idx
     if info[ses]['ch_name'] is None:
         logger.info("Warning: you did not specify a value for ch_name, the values that will be use are the following: ")
         ch_name = ["EDA", "PPG", "ECG", "TTL", "RSP"]
@@ -85,6 +93,7 @@ def convert(root, save, sub, ses=None, tr=None, ch_name=None):
         chtrig=4
     else:
         # Define chtrig ; should find a way to find it from a list of possible values
+        info[col].update({'ch_names': ["EDA", "PPG", "ECG", "TTL", "RSP"]})
         chtrig = info[ses]['ch_name'].index('TTL')
 
     # iterate through info
