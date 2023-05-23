@@ -7,6 +7,7 @@ import sys
 import click
 import logging
 import pprintpp
+import json
 
 LGR = logging.getLogger(__name__)
 
