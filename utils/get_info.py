@@ -119,7 +119,7 @@ def volume_counter(root, sub, ses=None, tr=1.49, trigger_ch="TTL"):
                 ses_runs[exp] = [runs]
             else:
                 ses_runs[exp].append(runs)
-
+    LGR.info(f"Volumes for session :\n{ses_runs}")
     return ses_runs, bio_df.columns
 
 
