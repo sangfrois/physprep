@@ -10,6 +10,7 @@ import math
 import click
 import logging
 import pprintpp
+import fnmatch
 from list_sub import list_sub
 from neurokit2 import read_acqknowledge
 LGR = logging.getLogger(__name__)
@@ -229,9 +230,12 @@ def get_info(
         nb_expected_volumes_run = {}
         tasks = []
         matches = glob.glob(os.path.join(root, sub, exp, "func", "*bold.json"))
+        # we want only want to keep 1 of the two files per run
+        if "mario" in matches[0]:
+            matches = fnmatch.filter(matches, "*-mag*")
         matches.sort()
         # iterate through _bold.json
-        for idx, filename in enumerate(matches):
+        for idx, filename in enumerate(matches):                
             task = filename.rfind(f"{exp}_") + 8
             task_end = filename.rfind("_")
             tasks += [filename[task:task_end]]
