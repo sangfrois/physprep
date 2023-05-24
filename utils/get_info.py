@@ -51,7 +51,7 @@ def volume_counter(root, sub, ses=None, tr=1.49, trigger_ch="TTL"):
     # loop iterating through files in each dict key representing session returned by list_sub
     # for this loop, exp refers to session's name, avoiding confusion with ses argument
     for exp in dirs:
-        LGR.info("counting volumes in physio file for:", exp)
+        LGR.info(f"counting volumes in physio file for: {exp}")
         for file in sorted(dirs[exp]):
             # reading acq
             bio_df, fs = read_acqknowledge(os.path.join(root, sub, exp, file))
