@@ -313,10 +313,7 @@ def get_info(
         nb_expected_runs = pprintpp.pformat(nb_expected_runs)
         if os.path.exists(os.path.join(save, sub)) is False:
             os.mkdir(os.path.join(save, sub))
-        if not ses_runs_matches[ses]:
-            filename = f"{sub}_volumes_{ses}-runs.json"
-        else:
-            filename = f"{sub}_volumes_all-ses-runs.json"
+        filename = f"{sub}_volumes_all-ses-runs.json"
         with open(os.path.join(save, sub, filename), "w") as fp:
             fp.write(nb_expected_runs)
     return nb_expected_runs
