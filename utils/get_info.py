@@ -4,21 +4,18 @@
 """another util for neuromod phys data conversion."""
 
 import os
-import sys
-import json
 import glob
+import json
 import math
 import click
-import bioread
 import logging
 import pprintpp
 from list_sub import list_sub
 from neurokit2 import read_acqknowledge
-
 LGR = logging.getLogger(__name__)
 
 
-def volume_counter(root, sub, ses=None, tr=1.49, trigger_ch='TTL'):
+def volume_counter(root, sub, ses=None, tr=1.49, trigger_ch="TTL"):
     """
     Volume counting for each run in a session.
 
@@ -32,7 +29,7 @@ def volume_counter(root, sub, ses=None, tr=1.49, trigger_ch='TTL'):
         Name of path for a specific session (optional workflow for specific experiment).
         Default to none.
     tr : float
-	    Value of the TR used in the MRI sequence.
+            Value of the TR used in the MRI sequence.
         Default to 1.49.
     trigger_ch : str
         Name of the trigger channel used on Acknowledge.
@@ -53,12 +50,10 @@ def volume_counter(root, sub, ses=None, tr=1.49, trigger_ch='TTL'):
     # loop iterating through files in each dict key representing session returned by list_sub
     # for this loop, exp refers to session's name, avoiding confusion with ses argument
     for exp in dirs:
-        print("counting volumes in physio file for:", exp)
+        LGR.info("counting volumes in physio file for:", exp)
         for file in sorted(dirs[exp]):
             # reading acq
-            bio_df, fs = read_acqknowledge(
-                os.path.join(root, sub, exp, file)
-            )
+            bio_df, fs = read_acqknowledge(os.path.join(root, sub, exp, file))
             # find the correct index of Trigger channel
             if trigger_ch in bio_df.columns:
                 trigger_index = list(bio_df.columns).index(trigger_ch)
@@ -125,16 +120,19 @@ def volume_counter(root, sub, ses=None, tr=1.49, trigger_ch='TTL'):
 
     return ses_runs, bio_df.columns
 
+
 @click.command()
-@click.argument('root', type=str)
-@click.argument('sub', type=str)
-@click.option('--ses', type=str, default=None, required=False)
-@click.option('--count_vol', type=bool, default=False, required=False)
-@click.option('--show', type=bool, default=True, required=False)
-@click.option('--save', type=str, default=None, required=False)
-@click.option('--tr', type=float, default=None, required=False)
-@click.option('--tr_channel', type=str, default=None, required=False)
-def call_get_info(root, sub, ses=None, count_vol=False, show=True, save=None, tr=None, tr_channel=None):
+@click.argument("root", type=str)
+@click.argument("sub", type=str)
+@click.option("--ses", type=str, default=None, required=False)
+@click.option("--count_vol", type=bool, default=False, required=False)
+@click.option("--show", type=bool, default=True, required=False)
+@click.option("--save", type=str, default=None, required=False)
+@click.option("--tr", type=float, default=None, required=False)
+@click.option("--tr_channel", type=str, default=None, required=False)
+def call_get_info(
+    root, sub, ses=None, count_vol=False, show=True, save=None, tr=None, tr_channel=None
+):
     """
     Call `get_info` function only if `get_info.py` is called as CLI
 
@@ -142,7 +140,10 @@ def call_get_info(root, sub, ses=None, count_vol=False, show=True, save=None, tr
     """
     get_info(root, sub, ses, count_vol, show, save, tr, tr_channel)
 
-def get_info(root, sub, ses=None, count_vol=False, show=True, save=None, tr=None, tr_channel=None):
+
+def get_info(
+    root, sub, ses=None, count_vol=False, show=True, save=None, tr=None, tr_channel=None
+):
     """
     Get all volumes taken for a sub.
     `get_info` pushes the info necessary to execute the phys2bids multi-run
@@ -176,17 +177,17 @@ def get_info(root, sub, ses=None, count_vol=False, show=True, save=None, tr=None
         Name of path for a specific session. Example: "ses-001".
     count_vol : bool
         Specify if you want to count triggers in physio file.
-        Default to False. 
+        Default to False.
     show : bool
         Specify if you want to print the dictionary.
-        Default to True. 
+        Default to True.
     save : str
         Specify where you want to save the dictionary in json format.
-        If not specified, the output will be saved where you run the script. 
+        If not specified, the output will be saved where you run the script.
         Default to None.
     tr : float
         Value of the TR used in the MRI sequence.
-        Default to None. 
+        Default to None.
     trigger_ch : str
         Name of the trigger channel used on Acknowledge.
         Defaults to None.
@@ -194,7 +195,7 @@ def get_info(root, sub, ses=None, count_vol=False, show=True, save=None, tr=None
     Returns
     -------
     ses_runs_vols : dict
-        Number of processed runs, number of expected runs, number of triggers/volumes per run, 
+        Number of processed runs, number of expected runs, number of triggers/volumes per run,
         sourcedata file location.
 
     Examples
@@ -213,14 +214,12 @@ def get_info(root, sub, ses=None, count_vol=False, show=True, save=None, tr=None
     nb_expected_runs = {}
 
     # If there is a tsv file matching the acq file and the nii.gz files in root
-    ses_info = list_sub(
-        os.path.join(root, "sourcedata/physio/"), sub, ses, ext=".acq"
-    )
+    ses_info = list_sub(os.path.join(root, "sourcedata/physio/"), sub, ses, ext=".acq")
     # iterate through sessions and get _matches.tsv with list_sub dict
     for exp in sorted(ses_runs_matches):
-        print(exp)
+        LGR.info(exp)
         if ses_info[exp] == []:
-            print('No acq file found for this session')
+            LGR.error("No acq file found for this session")
             continue
 
         # initialize a counter and a dictionary
@@ -243,7 +242,7 @@ def get_info(root, sub, ses=None, count_vol=False, show=True, save=None, tr=None
             tr = bold["RepetitionTime"]
 
         # print the thing to show progress
-        print(nb_expected_volumes_run)
+        LGR.info(f"Nifti metadata; number of volumes per run:\n{nb_expected_volumes_run}")
         # push all info in run in dict
         nb_expected_runs[exp] = {}
         # the nb of expected volumes in each run of the session (embedded dict)
@@ -271,10 +270,8 @@ def get_info(root, sub, ses=None, count_vol=False, show=True, save=None, tr=None
                     )
                     is False
                 ):
-                    print(
-                        "cannot find session directory for sourcedata :",
-                        os.path.join(root, "sourcedata/physio", sub, exp, name[0]),
-                    )
+                    LGR.info(f"cannot find session directory for sourcedata :\n"
+                        f"{os.path.join(root, 'sourcedata/physio', sub, exp, name[0])}")
                 else:
                     # count the triggers in physfile otherwise
                     try:
@@ -285,7 +282,7 @@ def get_info(root, sub, ses=None, count_vol=False, show=True, save=None, tr=None
                             tr=tr,
                             trigger_ch=tr_channel,
                         )
-                        print("finished counting volumes in physio file for:", exp)
+                        LGR.info(f"finished counting volumes in physio file for: {exp}")
 
                         for i, run in enumerate(vol_in_biopac[exp]):
                             run_dict.update({f"run-{i+1:02d}": run})
@@ -298,18 +295,19 @@ def get_info(root, sub, ses=None, count_vol=False, show=True, save=None, tr=None
                         continue
             except KeyError:
                 nb_expected_runs[exp]["recorded_triggers"] = "No triggers found"
-                print(
-                    "Directory is empty or file is clobbered/No triggers: ",
-                    os.path.join(root, "sourcedata/physio", sub, exp),
+                LGR.error(
+                    "Directory is empty or file is clobbered/No triggers:\n"
+                    f"{os.path.join(root, 'sourcedata/physio', sub, exp)}",
                 )
 
-                print(f"skipping :{exp} for task {filename}")
-        print("~" * 30)
+                LGR.error(f"skipping :{exp} for task {filename}")
+        print("~" * 80)
 
     if show:
         pprintpp.pprint(nb_expected_runs)
 
     if save is not None:
+        nb_expected_runs = pprintpp.pformat(nb_expected_runs)
         if os.path.exists(os.path.join(save, sub)) is False:
             os.mkdir(os.path.join(save, sub))
         if not ses_runs_matches[ses]:
@@ -317,8 +315,11 @@ def get_info(root, sub, ses=None, count_vol=False, show=True, save=None, tr=None
         else:
             filename = f"{sub}_volumes_all-ses-runs.json"
         with open(os.path.join(save, sub, filename), "w") as fp:
-            json.dump(nb_expected_runs, fp, sort_keys=True)
+            fp.write(nb_expected_runs)
     return nb_expected_runs
 
+
 if __name__ == "__main__":
+    log_fmt = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    logging.basicConfig(level=logging.INFO, format=log_fmt)
     call_get_info()

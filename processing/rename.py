@@ -9,6 +9,7 @@ import click
 import os
 import logging
 
+
 @click.command()
 @click.argument("indir", type=click.Path(exists=True), required=True)
 @click.argument("sub", type=str, required=True)
@@ -75,7 +76,9 @@ def co_register_physio(indir, sub, sessions=None):
             continue
 
         if info[ses]["recorded_triggers"].values is None:
-            logger.info(f"No recorded triggers information - check physio files for {ses}")
+            logger.info(
+                f"No recorded triggers information - check physio files for {ses}"
+            )
             continue
 
         if len(info[ses]["task"]) == 0:

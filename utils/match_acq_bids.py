@@ -9,6 +9,7 @@ import argparse
 import datetime
 from pytz import timezone
 
+
 def parse_args():
     parser = argparse.ArgumentParser(
         formatter_class=argparse.RawTextHelpFormatter,
@@ -22,9 +23,10 @@ def parse_args():
     )
     return parser.parse_args()
 
+
 @click.command()
-@click.argument('bids_path', type=str)
-@click.argument('biopac_path', type=str)
+@click.argument("bids_path", type=str)
+@click.argument("biopac_path", type=str)
 def match_all_bolds(bids_path, biopac_path):
     """
     Match the Acqknowldge files (.acq) with the bold files (.nii.gz).

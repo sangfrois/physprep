@@ -27,8 +27,9 @@ from clean import neuromod_ecg_clean, neuromod_eda_clean, neuromod_ppg_clean
 
 
 # ==================================================================================
-# Processing pipeline 
+# Processing pipeline
 # ==================================================================================
+
 
 @click.command()
 @click.argument("source", type=str)
@@ -37,7 +38,7 @@ from clean import neuromod_ecg_clean, neuromod_eda_clean, neuromod_ppg_clean
 @click.argument("outdir", type=str)
 @click.argument("save", type=bool)
 @click.argument("multi_echo", type=bool)
-def neuromod_bio_process(source, sub, ses, outdir, multi_echo): 
+def neuromod_bio_process(source, sub, ses, outdir, multi_echo):
     """
     Run processing pipeline on specified biosignals.
 
@@ -94,7 +95,9 @@ def neuromod_bio_process(source, sub, ses, outdir, multi_echo):
 
         #  rsp
         print("***Respiration workflow: begin***")
-        rsp, rsp_info = rsp_process(rsp_raw, sampling_rate=sampling_rate, method="khodadad2018")
+        rsp, rsp_info = rsp_process(
+            rsp_raw, sampling_rate=sampling_rate, method="khodadad2018"
+        )
         bio_info["RSP"] = rsp_info
         bio_df = pd.concat([bio_df, rsp], axis=1)
         print("***Respiration workflow: done***")
@@ -125,9 +128,11 @@ def neuromod_bio_process(source, sub, ses, outdir, multi_echo):
             json.dump(bio_info, fp)
             fp.close()
 
+
 # ==================================================================================
-# Loading functions 
+# Loading functions
 # ==================================================================================
+
 
 def load_json(filename):
     """
@@ -193,9 +198,11 @@ def load_segmented_runs(source, sub, ses):
 
     return data_tsv, data_json, filenames
 
+
 # ==================================================================================
-# Processing functions 
+# Processing functions
 # ==================================================================================
+
 
 def process_cardiac(signal_raw, signal_cleaned, sampling_rate=10000, data_type="PPG"):
     """
@@ -213,7 +220,7 @@ def process_cardiac(signal_raw, signal_cleaned, sampling_rate=10000, data_type="
         The sampling frequency of `signal_raw` (in Hz, i.e., samples/second).
         Defaults to 10000.
     data_type : str
-        Precise the type of signal to be processed. The function currently 
+        Precise the type of signal to be processed. The function currently
         support PPG and ECG signal processing.
         Default to 'PPG'.
 
@@ -302,7 +309,9 @@ def process_cardiac(signal_raw, signal_cleaned, sampling_rate=10000, data_type="
         }
     )
     if data_type in ["ecg", "ECG"]:
-        info[f"{data_type.upper()}_R_Peaks"] = info[f"{data_type.upper()}_R_Peaks"].tolist()
+        info[f"{data_type.upper()}_R_Peaks"] = info[
+            f"{data_type.upper()}_R_Peaks"
+        ].tolist()
         del info[f"{data_type.upper()}_Peaks"]
 
     # Prepare output
@@ -348,7 +357,7 @@ def ppg_process(ppg_raw, sampling_rate=10000):
 
     # Prepare signal for processing
     print("Cleaning PPG")
-    ppg_cleaned = neuromod_ppg_clean(ppg_signal, sampling_rate=10000.)
+    ppg_cleaned = neuromod_ppg_clean(ppg_signal, sampling_rate=10000.0)
     print("PPG Cleaned")
     # Process clean signal
     signals, info = process_cardiac(
@@ -375,7 +384,7 @@ def ecg_process(ecg_raw, sampling_rate=10000, method="bottenhorn", me=True):
         The processing pipeline to apply.
         Default to 'bottenhorn'.
     mr : bool
-        True if MB-ME sequence was used. Otherwise, considered that the MB-SE 
+        True if MB-ME sequence was used. Otherwise, considered that the MB-SE
         sequence was used.
         Default to True.
 
@@ -419,7 +428,7 @@ def eda_process(eda_raw, sampling_rate=10000, me=True):
         The sampling frequency of `eda_raw` (in Hz, i.e., samples/second).
         Default to 10000.
     mr : bool
-        True if MB-ME sequence was used. Otherwise, considered that the MB-SE 
+        True if MB-ME sequence was used. Otherwise, considered that the MB-SE
         sequence was used.
         Default to True.
 
@@ -438,19 +447,17 @@ def eda_process(eda_raw, sampling_rate=10000, me=True):
 
     # Prepare signal for processing
     print("Cleaning EDA")
-    eda_cleaned = neuromod_eda_clean(
-        eda_signal, sampling_rate=sampling_rate, me=me
-    )
+    eda_cleaned = neuromod_eda_clean(eda_signal, sampling_rate=sampling_rate, me=me)
     print("EDA Cleaned")
     # Process clean signal
     signals, info = nk.eda_process(
-        eda_cleaned, sampling_rate=sampling_rate, method='neurokit'
+        eda_cleaned, sampling_rate=sampling_rate, method="neurokit"
     )
-    
+
     for k in info.keys():
         if isinstance(info[k], np.ndarray):
             info[k] = info[k].tolist()
-    
+
     return signals, info
 
 
@@ -473,8 +480,8 @@ def rsp_process(rsp_raw, sampling_rate=10000, method="khodadad2018"):
 
     References
     ----------
-    Khodadad, D., Nordebo, S., Müller, B., Waldmann, A., Yerworth, R., Becher, T., ... 
-        & Bayford, R. (2018). Optimized breath detection algorithm in electrical impedance 
+    Khodadad, D., Nordebo, S., Müller, B., Waldmann, A., Yerworth, R., Becher, T., ...
+        & Bayford, R. (2018). Optimized breath detection algorithm in electrical impedance
         tomography. Physiological measurement, 39(9), 094001.
 
     See also
@@ -493,8 +500,6 @@ def rsp_process(rsp_raw, sampling_rate=10000, method="khodadad2018"):
             info[k] = info[k].tolist()
 
     return signals, info
-
-
 
 
 if __name__ == "__main__":

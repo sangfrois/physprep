@@ -12,7 +12,8 @@ from scipy import signal
 # Photoplethysmograph (PPG)
 # =======================================================================
 
-def neuromod_ppg_clean(ppg_signal, sampling_rate=10000.):
+
+def neuromod_ppg_clean(ppg_signal, sampling_rate=10000.0):
     """
     Clean a PPG signal.
 
@@ -43,7 +44,8 @@ def neuromod_ppg_clean(ppg_signal, sampling_rate=10000.):
 # Electrocardiogram (ECG)
 # =======================================================================
 
-def neuromod_ecg_clean(ecg_signal, sampling_rate=10000., method="biopac", me=False):
+
+def neuromod_ecg_clean(ecg_signal, sampling_rate=10000.0, method="biopac", me=False):
     """
     Clean an ECG signal.
 
@@ -60,8 +62,8 @@ def neuromod_ecg_clean(ecg_signal, sampling_rate=10000., method="biopac", me=Fal
         The processing pipeline to apply between 'biopac' and 'bottenhorn'.
         Default to 'biopac'.
     me : bool
-        Specify if the MRI sequence used was the multi-echo (True) 
-        or the single-echo (False). 
+        Specify if the MRI sequence used was the multi-echo (True)
+        or the single-echo (False).
         Default to False.
 
     Returns
@@ -77,7 +79,7 @@ def neuromod_ecg_clean(ecg_signal, sampling_rate=10000., method="biopac", me=Fal
         tr = 1.49
         mb = 4
         slices = 60
-        
+
     if method in ["biopac"]:
         clean = _ecg_clean_biopac(ecg_signal, sampling_rate)
     if method in ["bottenhorn", "bottenhorn2022"]:
@@ -93,7 +95,7 @@ def neuromod_ecg_clean(ecg_signal, sampling_rate=10000., method="biopac", me=Fal
 # =============================================================================
 # ECG internal : biopac recommendations
 # =============================================================================
-def _ecg_clean_biopac(ecg_signal, sampling_rate=10000., tr=1.49, slices=60, Q=10):
+def _ecg_clean_biopac(ecg_signal, sampling_rate=10000.0, tr=1.49, slices=60, Q=10):
     """
     Single-band sequence gradient noise reduction.
 
@@ -149,7 +151,9 @@ def _ecg_clean_biopac(ecg_signal, sampling_rate=10000., tr=1.49, slices=60, Q=10
     return ecg_clean
 
 
-def _ecg_clean_bottenhorn(ecg_signal, sampling_rate=10000., tr=1.49, mb=4, slices=60, Q=10):
+def _ecg_clean_bottenhorn(
+    ecg_signal, sampling_rate=10000.0, tr=1.49, mb=4, slices=60, Q=10
+):
     """
     Multiband sequence gradient noise reduction.
 
@@ -177,7 +181,7 @@ def _ecg_clean_bottenhorn(ecg_signal, sampling_rate=10000., tr=1.49, mb=4, slice
     References
     ----------
     Bottenhorn, K. L., Salo, T., Riedel, M. C., Sutherland, M. T., Robinson, J. L.,
-        Musser, E. D., & Laird, A. R. (2021). Denoising physiological data collected 
+        Musser, E. D., & Laird, A. R. (2021). Denoising physiological data collected
         during multi-band, multi-echo EPI sequences. bioRxiv, 2021-04.
         https://doi.org/10.1101/2021.04.01.437293
 
@@ -192,20 +196,14 @@ def _ecg_clean_bottenhorn(ecg_signal, sampling_rate=10000., tr=1.49, mb=4, slice
     # Remove low frequency artefacts: respiration & baseline wander using high pass butterworth filter (order=2)
     print("... Applying high pass filter.")
     ecg_clean = nk.signal_filter(
-        ecg_signal, 
-        sampling_rate=sampling_rate, 
-        lowcut=2, 
-        method="butter"
+        ecg_signal, sampling_rate=sampling_rate, lowcut=2, method="butter"
     )
     # Filtering at fundamental and specific harmonics per Biopac application note #265
     print("... Applying notch filter.")
     ecg_clean = _comb_band_stop(notches, nyquist, ecg_clean, Q)
     # Low pass filtering at 40Hz per Biopac application note #242
     print("... Applying low pass filtering.")
-    ecg_clean = nk.signal_filter(ecg_signal,
-        sampling_rate=sampling_rate, 
-        highcut=40
-    )
+    ecg_clean = nk.signal_filter(ecg_signal, sampling_rate=sampling_rate, highcut=40)
     # bandpass filtering
     ecg_clean = nk.signal_filter(
         ecg_clean,
@@ -222,7 +220,7 @@ def _ecg_clean_bottenhorn(ecg_signal, sampling_rate=10000., tr=1.49, mb=4, slice
 # =============================================================================
 # EDA
 # =============================================================================
-def neuromod_eda_clean(eda_signal, sampling_rate=10000., me=True, Q=10): 
+def neuromod_eda_clean(eda_signal, sampling_rate=10000.0, me=True, Q=10):
     """
     Multiband sequence gradient noise reduction.
 
@@ -250,7 +248,7 @@ def neuromod_eda_clean(eda_signal, sampling_rate=10000., me=True, Q=10):
     References
     ----------
     Bottenhorn, K. L., Salo, T., Riedel, M. C., Sutherland, M. T., Robinson, J. L.,
-        Musser, E. D., & Laird, A. R. (2021). Denoising physiological data collected 
+        Musser, E. D., & Laird, A. R. (2021). Denoising physiological data collected
         during multi-band, multi-echo EPI sequences. bioRxiv, 2021-04.
         https://doi.org/10.1101/2021.04.01.437293
 
@@ -273,10 +271,10 @@ def neuromod_eda_clean(eda_signal, sampling_rate=10000., me=True, Q=10):
 
     # Low pass filtering at 3Hz, order=4
     eda_clean = nk.eda_clean(eda_signal, sampling_rate=sampling_rate)
-    # Filtering at fundamental and specific harmonics 
+    # Filtering at fundamental and specific harmonics
     print("... Applying notch filter.")
     eda_clean = _comb_band_stop(notches, nyquist, eda_clean, Q)
-    
+
     return eda_clean
 
 
@@ -284,10 +282,11 @@ def neuromod_eda_clean(eda_signal, sampling_rate=10000., me=True, Q=10):
 # General functions
 # =============================================================================
 
+
 def _comb_band_stop(notches, nyquist, filtered, Q):
     """
     A serie of notch filters aligned with the scanner gradient's harmonics.
-    
+
     Parameters
     ----------
     notches : dict

@@ -12,7 +12,9 @@ from phys2bids.phys2bids import phys2bids
 import glob
 
 import sys
+
 sys.path.append("../utils")
+
 
 @click.command()
 @click.argument("root", type=click.Path(exists=True))
@@ -30,6 +32,7 @@ def call_convert(root, save, sub, ses=None, tr=None, ch_name=None):
     if ch_name is not None:
         ch_name = json.loads(ch_name)
     convert(root, save, sub, ses, tr, ch_name)
+
 
 def convert(root, save, sub, ses=None, tr=None, ch_name=None, overwrite=False):
     """
@@ -75,26 +78,28 @@ def convert(root, save, sub, ses=None, tr=None, ch_name=None, overwrite=False):
     # define sessions
     if sessions is None:
         sessions = sorted(list(info.columns))
-        # Remove the sessions that are already processed 
+        # Remove the sessions that are already processed
         if overwrite is False:
             existing = [str(d[-8:-1]) for d in glob.glob(f"{root}{sub}/*/")]
             setA = set(sessions)
             # Get new set with elements that are only in sessions but not in existing
             sessions = sorted(list(setA.difference(existing)))
-    
+
     elif isinstance(ses, list) is False:
         ses = [ses]
     # Define ch_name and trigger idx
-    if info[ses]['ch_name'] is None:
-        logger.info("Warning: you did not specify a value for ch_name, the values that will be use are the following: ")
+    if info[ses]["ch_name"] is None:
+        logger.info(
+            "Warning: you did not specify a value for ch_name, the values that will be use are the following: "
+        )
         ch_name = ["EDA", "PPG", "ECG", "TTL", "RSP"]
-        info[ses]['ch_name'] = ch_name
+        info[ses]["ch_name"] = ch_name
         logger.info("Please make sure, those values are the right ones :\n{ch_name}")
-        chtrig=4
+        chtrig = 4
     else:
         # Define chtrig ; should find a way to find it from a list of possible values
-        info[col].update({'ch_names': ["EDA", "PPG", "ECG", "TTL", "RSP"]})
-        chtrig = info[ses]['ch_name'].index('TTL')
+        info[col].update({"ch_names": ["EDA", "PPG", "ECG", "TTL", "RSP"]})
+        chtrig = info[ses]["ch_name"].index("TTL")
 
     # iterate through info
     for col in ses:
