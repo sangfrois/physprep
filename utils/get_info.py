@@ -219,7 +219,7 @@ def get_info(
     for exp in sorted(ses_runs_matches):
         LGR.info(exp)
         if ses_info[exp] == []:
-            LGR.error("No acq file found for this session")
+            LGR.info("No acq file found for this session")
             continue
 
         # initialize a counter and a dictionary
@@ -295,12 +295,12 @@ def get_info(
                         continue
             except KeyError:
                 nb_expected_runs[exp]["recorded_triggers"] = "No triggers found"
-                LGR.error(
+                LGR.info(
                     "Directory is empty or file is clobbered/No triggers:\n"
                     f"{os.path.join(root, 'sourcedata/physio', sub, exp)}",
                 )
 
-                LGR.error(f"skipping :{exp} for task {filename}")
+                LGR.info(f"skipping :{exp} for task {filename}")
         print("~" * 80)
 
     if show:
