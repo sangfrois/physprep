@@ -40,6 +40,7 @@ def volume_counter(root, sub, ses=None, tr=1.49, trigger_ch="TTL"):
     ses_runs: dict
         Each key lists the number of volumes/triggers in each run, including invalid volumes.
     """
+    LGR = logging.getLogger(__name__)
     # Check directory
     if os.path.exists(root) is False:
         raise ValueError("Couldn't find the following directory: ", root)
