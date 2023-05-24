@@ -138,6 +138,7 @@ def call_get_info(
 
     For parameters description, please refer to the documentation of the `get_info` function
     """
+    LGR = logging.getLogger(__name__)
     get_info(root, sub, ses, count_vol, show, save, tr, tr_channel)
 
 
@@ -205,6 +206,7 @@ def get_info(
     In terminal
     >>> python get_info.py /home/user/dataset/ sub-01 --ses ses-001 --count_vol True --save /home/user/dataset/info/ --tr 2.0 --tr_channel 'Custom, HLT100C - A 5'
     """
+    LGR = logging.getLogger(__name__)
     # list matches for a whole subject's dir
     ses_runs_matches = list_sub(
         os.path.join(root, "sourcedata/physio/"), sub, ses=ses, ext=".tsv", show=show
