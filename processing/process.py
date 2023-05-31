@@ -23,7 +23,7 @@ from neurokit2 import signal_rate
 from neurokit2.signal.signal_formatpeaks import _signal_from_indices
 
 # home brewed cleaning utils
-from clean import neuromod_ecg_clean, neuromod_eda_clean, neuromod_ppg_clean
+from clean import neuromod_ecg_clean, neuromod_eda_clean, neuromod_ppg_clean, neuromod_rsp_clean
 
 
 # ==================================================================================
@@ -36,7 +36,6 @@ from clean import neuromod_ecg_clean, neuromod_eda_clean, neuromod_ppg_clean
 @click.argument("sub", type=str)
 @click.argument("ses", type=str)
 @click.argument("outdir", type=str)
-@click.argument("save", type=bool)
 @click.argument("multi_echo", type=bool)
 def neuromod_bio_process(source, sub, ses, outdir, multi_echo):
     """
@@ -357,7 +356,7 @@ def ppg_process(ppg_raw, sampling_rate=10000):
 
     # Prepare signal for processing
     print("Cleaning PPG")
-    ppg_cleaned = neuromod_ppg_clean(
+    ppg_signal, ppg_cleaned = neuromod_ppg_clean(
         ppg_signal, sampling_rate=10000.0, downsampling=2500
     )
     print("PPG Cleaned")
@@ -404,7 +403,7 @@ def ecg_process(ecg_raw, sampling_rate=10000, method="bottenhorn", me=True):
 
     # Prepare signal for processing
     print("Cleaning ECG")
-    ecg_cleaned = neuromod_ecg_clean(
+    ecg_signal, ecg_cleaned = neuromod_ecg_clean(
         ecg_signal, sampling_rate=sampling_rate, method=method, me=me, downsampling=2500
     )
     print("ECG Cleaned")
@@ -449,7 +448,7 @@ def eda_process(eda_raw, sampling_rate=10000, me=True):
 
     # Prepare signal for processing
     print("Cleaning EDA")
-    eda_cleaned = neuromod_eda_clean(
+    eda_signal, eda_cleaned = neuromod_eda_clean(
         eda_signal, sampling_rate=sampling_rate, me=me, downsampling=2500
     )
     print("EDA Cleaned")
@@ -496,7 +495,7 @@ def rsp_process(rsp_raw, sampling_rate=10000, method="khodadad2018"):
 
     # Clean and filter respiratory signal
     print("Cleaning RSP")
-    rsp_cleaned = neuromod_rsp_clean(
+    rsp_signal, rsp_cleaned = neuromod_rsp_clean(
         rsp_signal, sampling_rate=sampling_rate, downsampling=2500
     )
     # Process clean signal

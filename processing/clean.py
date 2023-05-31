@@ -42,8 +42,9 @@ def neuromod_ppg_clean(ppg_signal, sampling_rate=10000.0, downsampling=None):
     # Downsample the signal if specified
     if downsampling is not None:
         ppg_clean = nk.signal_resample(ppg_clean, sampling_rate=sampling_rate, desired_sampling_rate=downsampling)
+        ppg_signal = nk.signal_resample(ppg_signal, sampling_rate=sampling_rate, desired_sampling_rate=downsampling)
 
-    return ppg_clean
+    return ppg_signal, ppg_clean
 
 
 # ======================================================================
@@ -100,8 +101,9 @@ def neuromod_ecg_clean(ecg_signal, sampling_rate=10000.0, method="biopac", me=Fa
     # Downsample the signal if specified
     if downsampling is not None:
         ecg_clean = nk.signal_resample(ecg_clean, sampling_rate=sampling_rate, desired_sampling_rate=downsampling)
+        ecg_signal = nk.signal_resample(ecg_signal, sampling_rate=sampling_rate, desired_sampling_rate=downsampling)
 
-    return ecg_clean
+    return ecg_signal, ecg_clean
 
 
 # =============================================================================
@@ -296,8 +298,9 @@ def neuromod_eda_clean(eda_signal, sampling_rate=10000.0, me=True, Q=100, downsa
     # Downsample the signal if specified
     if downsampling is not None:
         eda_clean = nk.signal_resample(eda_clean, sampling_rate=sampling_rate, desired_sampling_rate=downsampling)
+        eda_signal = nk.signal_resample(eda_signal, sampling_rate=sampling_rate, desired_sampling_rate=downsampling)
 
-    return eda_clean
+    return eda_signal, eda_clean
 
 
 # =============================================================================
@@ -334,8 +337,9 @@ def neuromod_rsp_clean(rsp_signal, sampling_rate=10000.0, downsampling=None):
     # Downsample the signal if specified
     if downsampling is not None:
         rsp_clean = nk.signal_resample(rsp_clean, sampling_rate=sampling_rate, desired_sampling_rate=downsampling)
+        rsp_signal = nk.signal_resample(rsp_signal, sampling_rate=sampling_rate, desired_sampling_rate=downsampling)
 
-    return rsp_clean
+    return rsp_signal, rsp_clean
 
     
 # =============================================================================
