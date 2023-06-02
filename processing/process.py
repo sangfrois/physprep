@@ -9,6 +9,7 @@ import json
 import click
 import numpy as np
 import pandas as pd
+from pathlib import Path
 
 # high-level processing utils
 from heartpy import process
@@ -112,15 +113,16 @@ def neuromod_bio_process(source, sub, ses, outdir, multi_echo):
         bio_df["time"] = df["time"]
 
         print("***Saving processed biosignals***")
+        filename = Path(source)
         bio_df.to_csv(
             os.path.join(
-                outdir, sub, ses, f"{sub}_{ses}_task-{source.split("/")[-1]}_run-{idx+1}_physio.tsv.gz"
+                outdir, sub, ses, f"{sub}_{ses}_task-{filename.parts[-1]}_run-{idx+1}_physio.tsv.gz"
             ),
             sep="\t",
         )
         with open(
             os.path.join(
-                outdir, sub, ses, f"{sub}_{ses}_task-{source.split("/")[-1]}_run-{idx+1}_physio.json"
+                outdir, sub, ses, f"{sub}_{ses}_task-{filename.parts[-1]}_run-{idx+1}_physio.json"
             ),
             "w",
         ) as fp:
