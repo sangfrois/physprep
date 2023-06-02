@@ -114,13 +114,13 @@ def neuromod_bio_process(source, sub, ses, outdir, multi_echo):
         print("***Saving processed biosignals***")
         bio_df.to_csv(
             os.path.join(
-                outdir, sub, ses, f"{filenames_tsv[idx]}" + "_physio" + ".tsv.gz"
+                outdir, sub, ses, f"{sub}_{ses}_task-{source.split("/")[-1]}_run-{idx+1}_physio.tsv.gz"
             ),
             sep="\t",
         )
         with open(
             os.path.join(
-                outdir, sub, ses, f"{filenames_tsv[idx]}" + "_physio" + ".json"
+                outdir, sub, ses, f"{sub}_{ses}_task-{source.split("/")[-1]}_run-{idx+1}_physio.json"
             ),
             "w",
         ) as fp:
