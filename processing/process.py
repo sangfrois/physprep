@@ -59,11 +59,12 @@ def neuromod_bio_process(source, sub, ses, outdir, multi_echo):
     Examples
     --------
     In terminal
-    >>> python process.py /home/user/dataset/converted/ sub-01 ses-001 /home/user/dataset/derivatives/ True False
+    >>> python process.py /home/user/dataset/converted/ sub-01 ses-001 /home/user/dataset/derivatives/ True
     """
     # Check if `outdir` exists, otherwise create it
+
     if not os.path.exists(os.path.join(outdir, sub, ses)):
-        os.mkdir(os.path.join(outdir, sub, ses))
+        os.makedirs(os.path.join(outdir, sub, ses))
 
     # Load tsv files contained in source/sub/ses
     data_tsv, data_json, filenames_tsv = load_segmented_runs(source, sub, ses, outdir, remove_padding=True)
