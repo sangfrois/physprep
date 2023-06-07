@@ -60,14 +60,19 @@ def neuromod_bio_process(source, sub, ses, outdir, multi_echo):
     In terminal
     >>> python process.py /home/user/dataset/converted/ sub-01 ses-001 /home/user/dataset/derivatives/ True False
     """
+    # Check if `outdir` exists, otherwise create it
+    if not os.path.exists(os.path.join(outdir, sub, ses)):
+        os.mkdir(os.path.join(outdir, sub, ses))
+        
     # Load tsv files contained in source/sub/ses
-    data_tsv, data_json, filenames_tsv = load_segmented_runs(source, sub, ses)
+    data_tsv, data_json, filenames_tsv = load_segmented_runs(source, sub, ses, outdir, remove_padding=True)
     sampling_rate = data_json["SamplingFrequency"]
 
     # initialize returned objects
     for idx, df in enumerate(data_tsv):
+        run = filenames_tsv[idx].split("_")[2]
         print(
-            f"---Processing biosignals for {sub} {ses}: run {filenames_tsv[idx][-2:]}---"
+            f"---Processing biosignals for {sub} {ses}: {run}---"
         )
 
         bio_info = {}
@@ -86,7 +91,7 @@ def neuromod_bio_process(source, sub, ses, outdir, multi_echo):
         bio_df = pd.concat([bio_df, ppg], axis=1)
         print("***PPG workflow: done***")
 
-        # ecg
+        #  ecg
         print("***ECG workflow: begin***")
         ecg, ecg_info = ecg_process(ecg_raw, sampling_rate=sampling_rate, me=multi_echo)
         bio_info["ECG"] = ecg_info
@@ -116,13 +121,13 @@ def neuromod_bio_process(source, sub, ses, outdir, multi_echo):
         filename = Path(source)
         bio_df.to_csv(
             os.path.join(
-                outdir, sub, ses, f"{sub}_{ses}_task-{filename.parts[-1]}_run-{idx+1}_physio.tsv.gz"
+                outdir, sub, ses, f"{sub}_{ses}_{run}_physio.tsv.gz"
             ),
             sep="\t",
         )
         with open(
             os.path.join(
-                outdir, sub, ses, f"{sub}_{ses}_task-{filename.parts[-1]}_run-{idx+1}_physio.json"
+                outdir, sub, ses, f"{sub}_{ses}_{run}_physio.json"
             ),
             "w",
         ) as fp:
@@ -154,7 +159,7 @@ def load_json(filename):
     return data
 
 
-def load_segmented_runs(source, sub, ses):
+def load_segmented_runs(source, sub, ses, outdir, remove_padding=True):
     """
     Parameters
     ----------
@@ -164,6 +169,14 @@ def load_segmented_runs(source, sub, ses):
         The id of the subject.
     ses : str
         The id of the session.
+    outdir : str
+        The directory to save the start padding, only if `remove_padding`
+        is True.
+    remove_padding : bool
+        Indicate if the padding should be removed or not from the data. 
+        If True, the signal included in the start padding is saved in outdir.
+        If no padding was used, `remove_padding`should be False. 
+        Default to True.
 
     Returns
     -------
@@ -176,26 +189,39 @@ def load_segmented_runs(source, sub, ses):
     """
     data_tsv, filenames = [], []
     files_tsv = [f for f in os.listdir(os.path.join(source, sub, ses)) if "tsv.gz" in f]
-    # Remove files ending with _01
-    files_tsv = [f for f in files_tsv if "_01." not in f]
     files_tsv.sort()
 
     for tsv in files_tsv:
         filename = tsv.split(".")[0]
         filenames.append(filename)
-        print(f"---Reading data for {sub} {ses}: run {filename[-2:]}---")
+        print(f"---Reading data for {sub} {ses}: {filename.split('_')[2]}---")
         json = filename + ".json"
         print("Reading json file")
         data_json = load_json(os.path.join(source, sub, ses, json))
         print("Reading tsv file")
-        data_tsv.append(
-            pd.read_csv(
-                os.path.join(source, sub, ses, tsv),
-                sep="\t",
-                compression="gzip",
-                names=data_json["Columns"],
-            )
+        tmp_csv = pd.read_csv(
+            os.path.join(source, sub, ses, tsv),
+            sep="\t",
+            compression="gzip",
+            names=data_json["Columns"],
         )
+        if remove_padding:
+            # Get triggers
+            trigger = tmp_csv[tmp_csv['TTL'] > 4]
+            # First trigger
+            start = list(trigger.index)[0]
+            # Last trigger
+            end = list(trigger.index)[-1] 
+
+            data_tsv.append(tmp_csv[start:end])
+            tmp_csv[:start].to_csv(
+                os.path.join(
+                    outdir, sub, ses, f"{filename}_noseq.tsv.gz"
+                    ), 
+                sep='\t'
+                )
+        else:
+            data_tsv.append(tmp_csv)
 
     return data_tsv, data_json, filenames
 
