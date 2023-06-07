@@ -17,6 +17,7 @@ from systole.correction import correct_rr, correct_peaks
 from neurokit2 import ecg_peaks, ppg_findpeaks
 
 # signal utils
+import timeit
 import neurokit2 as nk
 from neurokit2.misc import as_vector
 from systole.utils import input_conversion
@@ -63,7 +64,7 @@ def neuromod_bio_process(source, sub, ses, outdir, multi_echo):
     # Check if `outdir` exists, otherwise create it
     if not os.path.exists(os.path.join(outdir, sub, ses)):
         os.mkdir(os.path.join(outdir, sub, ses))
-        
+
     # Load tsv files contained in source/sub/ses
     data_tsv, data_json, filenames_tsv = load_segmented_runs(source, sub, ses, outdir, remove_padding=True)
     sampling_rate = data_json["SamplingFrequency"]
@@ -86,38 +87,43 @@ def neuromod_bio_process(source, sub, ses, outdir, multi_echo):
 
         # ppg
         print("******PPG workflow: begin***")
+        start_time = timeit.default_timer()
         ppg, ppg_info = ppg_process(ppg_raw, sampling_rate=sampling_rate)
         bio_info["PPG"] = ppg_info
         bio_df = pd.concat([bio_df, ppg], axis=1)
-        print("***PPG workflow: done***")
+        print(f"***PPG workflow: done in {timeit.default_timer()-start_time} sec***")
 
         #  ecg
         print("***ECG workflow: begin***")
+        start_time = timeit.default_timer()
         ecg, ecg_info = ecg_process(ecg_raw, sampling_rate=sampling_rate, me=multi_echo)
         bio_info["ECG"] = ecg_info
         bio_df = pd.concat([bio_df, ecg], axis=1)
-        print("***ECG workflow: done***")
+        print(f"***ECG workflow: done in {timeit.default_timer()-start_time} sec***")
 
         #  rsp
         print("***Respiration workflow: begin***")
+        start_time = timeit.default_timer()
         rsp, rsp_info = rsp_process(
             rsp_raw, sampling_rate=sampling_rate, method="khodadad2018"
         )
         bio_info["RSP"] = rsp_info
         bio_df = pd.concat([bio_df, rsp], axis=1)
-        print("***Respiration workflow: done***")
+        print(f"***Respiration workflow: done in {timeit.default_timer()-start_time} sec***")
 
         #  eda
         print("***Electrodermal activity workflow: begin***")
+        start_time = timeit.default_timer()
         eda, eda_info = eda_process(eda_raw, sampling_rate, me=multi_echo)
         bio_info["EDA"] = eda_info
         bio_df = pd.concat([bio_df, eda], axis=1)
-        print("***Electrodermal activity workflow: done***")
+        print(f"***Electrodermal activity workflow: done in {timeit.default_timer()-start_time} sec***")
 
         # return a dataframe
         bio_df["time"] = df["time"]
 
-        print("***Saving processed biosignals***")
+        print("***Saving processed biosignals: begin***")
+        start_time = timeit.default_timer()
         filename = Path(source)
         bio_df.to_csv(
             os.path.join(
@@ -133,6 +139,7 @@ def neuromod_bio_process(source, sub, ses, outdir, multi_echo):
         ) as fp:
             json.dump(bio_info, fp)
             fp.close()
+        print(f"***Saving processed biosignals: done in {timeit.default_timer()-start_time} sec***")
 
 
 # ==================================================================================
