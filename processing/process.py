@@ -89,36 +89,50 @@ def neuromod_bio_process(source, sub, ses, outdir, multi_echo):
         # ppg
         print("******PPG workflow: begin***")
         start_time = timeit.default_timer()
-        ppg, ppg_info = ppg_process(ppg_raw, sampling_rate=sampling_rate)
-        bio_info["PPG"] = ppg_info
-        bio_df = pd.concat([bio_df, ppg], axis=1)
-        print(f"***PPG workflow: done in {timeit.default_timer()-start_time} sec***")
+        try:
+            ppg, ppg_info = ppg_process(ppg_raw, sampling_rate=sampling_rate)
+            bio_info["PPG"] = ppg_info
+            bio_df = pd.concat([bio_df, ppg], axis=1)
+            print(f"***PPG workflow: done in {timeit.default_timer()-start_time} sec***")
+        except:
+            print(f"***PPG workflow: failed after {timeit.default_timer()-start_time} sec***")
+            continue
 
         #  ecg
         print("***ECG workflow: begin***")
         start_time = timeit.default_timer()
-        ecg, ecg_info = ecg_process(ecg_raw, sampling_rate=sampling_rate, me=multi_echo)
-        bio_info["ECG"] = ecg_info
-        bio_df = pd.concat([bio_df, ecg], axis=1)
-        print(f"***ECG workflow: done in {timeit.default_timer()-start_time} sec***")
+        try:
+            ecg, ecg_info = ecg_process(ecg_raw, sampling_rate=sampling_rate, me=multi_echo)
+            bio_info["ECG"] = ecg_info
+            bio_df = pd.concat([bio_df, ecg], axis=1)
+            print(f"***ECG workflow: done in {timeit.default_timer()-start_time} sec***")
+        except:
+            print(f"***ECG workflow: failed after {timeit.default_timer()-start_time} sec***")
+            continue
 
         #  rsp
         print("***Respiration workflow: begin***")
         start_time = timeit.default_timer()
-        rsp, rsp_info = rsp_process(
-            rsp_raw, sampling_rate=sampling_rate, method="khodadad2018"
-        )
-        bio_info["RSP"] = rsp_info
-        bio_df = pd.concat([bio_df, rsp], axis=1)
-        print(f"***Respiration workflow: done in {timeit.default_timer()-start_time} sec***")
+        try:
+            rsp, rsp_info = rsp_process(rsp_raw, sampling_rate=sampling_rate, method="khodadad2018")
+            bio_info["RSP"] = rsp_info
+            bio_df = pd.concat([bio_df, rsp], axis=1)
+            print(f"***Respiration workflow: done in {timeit.default_timer()-start_time} sec***")
+        except:
+            print(f"***RSP workflow: failed after {timeit.default_timer()-start_time} sec***")
+            continue
 
         #  eda
         print("***Electrodermal activity workflow: begin***")
         start_time = timeit.default_timer()
-        eda, eda_info = eda_process(eda_raw, sampling_rate, me=multi_echo)
-        bio_info["EDA"] = eda_info
-        bio_df = pd.concat([bio_df, eda], axis=1)
-        print(f"***Electrodermal activity workflow: done in {timeit.default_timer()-start_time} sec***")
+        try:
+            eda, eda_info = eda_process(eda_raw, sampling_rate, me=multi_echo)
+            bio_info["EDA"] = eda_info
+            bio_df = pd.concat([bio_df, eda], axis=1)
+            print(f"***Electrodermal activity workflow: done in {timeit.default_timer()-start_time} sec***")
+        except:
+            print(f"***EDA workflow: failed after {timeit.default_timer()-start_time} sec***")
+            continue
 
         # return a dataframe
         bio_df["time"] = df["time"]
