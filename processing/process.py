@@ -96,7 +96,6 @@ def neuromod_bio_process(source, sub, ses, outdir, multi_echo):
             print(f"***PPG workflow: done in {timeit.default_timer()-start_time} sec***")
         except:
             print(f"***PPG workflow: failed after {timeit.default_timer()-start_time} sec***")
-            continue
 
         #  ecg
         print("***ECG workflow: begin***")
@@ -108,7 +107,6 @@ def neuromod_bio_process(source, sub, ses, outdir, multi_echo):
             print(f"***ECG workflow: done in {timeit.default_timer()-start_time} sec***")
         except:
             print(f"***ECG workflow: failed after {timeit.default_timer()-start_time} sec***")
-            continue
 
         #  rsp
         print("***Respiration workflow: begin***")
@@ -120,7 +118,6 @@ def neuromod_bio_process(source, sub, ses, outdir, multi_echo):
             print(f"***Respiration workflow: done in {timeit.default_timer()-start_time} sec***")
         except:
             print(f"***RSP workflow: failed after {timeit.default_timer()-start_time} sec***")
-            continue
 
         #  eda
         print("***Electrodermal activity workflow: begin***")
@@ -132,7 +129,6 @@ def neuromod_bio_process(source, sub, ses, outdir, multi_echo):
             print(f"***Electrodermal activity workflow: done in {timeit.default_timer()-start_time} sec***")
         except:
             print(f"***EDA workflow: failed after {timeit.default_timer()-start_time} sec***")
-            continue
 
         # return a dataframe
         bio_df["time"] = df["time"]
@@ -145,6 +141,7 @@ def neuromod_bio_process(source, sub, ses, outdir, multi_echo):
                 outdir, sub, ses, f"{sub}_{ses}_{run}_physio.tsv.gz"
             ),
             sep="\t",
+            index=False
         )
         with open(
             os.path.join(
@@ -217,9 +214,9 @@ def load_segmented_runs(source, sub, ses, outdir, remove_padding=True):
         filename = tsv.split(".")[0]
         filenames.append(filename)
         print(f"---Reading data for {sub} {ses}: {filename.split('_')[2]}---")
-        json = filename + ".json"
+        json_file = filename + ".json"
         print("Reading json file")
-        data_json = load_json(os.path.join(source, sub, ses, json))
+        data_json = load_json(os.path.join(source, sub, ses, json_file))
         print("Reading tsv file")
         tmp_csv = pd.read_csv(
             os.path.join(source, sub, ses, tsv),
@@ -235,12 +232,13 @@ def load_segmented_runs(source, sub, ses, outdir, remove_padding=True):
             # Last trigger
             end = list(trigger.index)[-1] 
 
-            data_tsv.append(tmp_csv[start:end])
+            data_tsv.append(tmp_csv[start:end].reset_index(drop=True))
             tmp_csv[:start].to_csv(
                 os.path.join(
                     outdir, sub, ses, f"{filename}_noseq.tsv.gz"
                     ), 
-                sep='\t'
+                sep='\t',
+                index=False
                 )
         else:
             data_tsv.append(tmp_csv)
@@ -377,7 +375,7 @@ def process_cardiac(signal_raw, signal_cleaned, sampling_rate=10000, data_type="
     return signals, info
 
 
-def ppg_process(ppg_raw, sampling_rate=10000):
+def ppg_process(ppg_raw, sampling_rate=10000, downsampling_rate=2500):
     """
     Process PPG signal.
 
@@ -390,6 +388,10 @@ def ppg_process(ppg_raw, sampling_rate=10000):
     sampling_rate : int
         The sampling frequency of `ppg_raw` (in Hz, i.e., samples/second).
         Default to 10000.
+    downsampling_rate : int
+        The sampling frequency to use to downsample the signals (in Hz, i.e., samples/second).
+        If None, the signals are not downsampled.
+        Default to 2500.
 
     Returns
     -------
@@ -407,18 +409,23 @@ def ppg_process(ppg_raw, sampling_rate=10000):
     # Prepare signal for processing
     print("Cleaning PPG")
     ppg_signal, ppg_cleaned = neuromod_ppg_clean(
-        ppg_signal, sampling_rate=10000.0, downsampling=2500
+        ppg_signal, sampling_rate=sampling_rate, downsampling=downsampling_rate
     )
     print("PPG Cleaned")
     # Process clean signal
-    signals, info = process_cardiac(
-        ppg_signal, ppg_cleaned, sampling_rate=10000, data_type="PPG"
-    )
+    if downsampling_rate is None:
+        signals, info = process_cardiac(
+            ppg_signal, ppg_cleaned, sampling_rate=sampling_rate, data_type="PPG"
+        )
+    else:
+        signals, info = process_cardiac(
+            ppg_signal, ppg_cleaned, sampling_rate=downsampling_rate, data_type="PPG"
+        )
 
     return signals, info
 
 
-def ecg_process(ecg_raw, sampling_rate=10000, method="bottenhorn", me=True):
+def ecg_process(ecg_raw, sampling_rate=10000, downsampling_rate=2500, method="bottenhorn", me=True):
     """
     Process ECG signal.
 
@@ -431,6 +438,10 @@ def ecg_process(ecg_raw, sampling_rate=10000, method="bottenhorn", me=True):
     sampling_rate : int
         The sampling frequency of `ecg_raw` (in Hz, i.e., samples/second).
         Default to 10000.
+    downsampling_rate : int
+        The sampling frequency to use to downsample the signals (in Hz, i.e., samples/second).
+        If None, the signals are not downsampled.
+        Default to 2500.
     method : str
         The processing pipeline to apply.
         Default to 'bottenhorn'.
@@ -454,18 +465,23 @@ def ecg_process(ecg_raw, sampling_rate=10000, method="bottenhorn", me=True):
     # Prepare signal for processing
     print("Cleaning ECG")
     ecg_signal, ecg_cleaned = neuromod_ecg_clean(
-        ecg_signal, sampling_rate=sampling_rate, method=method, me=me, downsampling=2500
+        ecg_signal, sampling_rate=sampling_rate, method=method, me=me, downsampling=downsampling_rate
     )
     print("ECG Cleaned")
     # Process clean signal
-    signals, info = process_cardiac(
-        ecg_signal, ecg_cleaned, sampling_rate=sampling_rate, data_type="ECG"
-    )
+    if downsampling_rate is None:
+        signals, info = process_cardiac(
+            ecg_signal, ecg_cleaned, sampling_rate=sampling_rate, data_type="ECG"
+        )
+    else:
+        signals, info = process_cardiac(
+            ecg_signal, ecg_cleaned, sampling_rate=downsampling_rate, data_type="ECG"
+        )
 
     return signals, info
 
 
-def eda_process(eda_raw, sampling_rate=10000, me=True):
+def eda_process(eda_raw, sampling_rate=10000, downsampling_rate=2500, me=True):
     """
     Process EDA signal.
 
@@ -478,6 +494,10 @@ def eda_process(eda_raw, sampling_rate=10000, me=True):
     sampling_rate : int
         The sampling frequency of `eda_raw` (in Hz, i.e., samples/second).
         Default to 10000.
+    downsampling_rate : int
+        The sampling frequency to use to downsample the signals (in Hz, i.e., samples/second).
+        If None, the signals are not downsampled.
+        Default to 2500.    
     mr : bool
         True if MB-ME sequence was used. Otherwise, considered that the MB-SE
         sequence was used.
@@ -499,13 +519,19 @@ def eda_process(eda_raw, sampling_rate=10000, me=True):
     # Prepare signal for processing
     print("Cleaning EDA")
     eda_signal, eda_cleaned = neuromod_eda_clean(
-        eda_signal, sampling_rate=sampling_rate, me=me, downsampling=2500
+        eda_signal, sampling_rate=sampling_rate, me=me, downsampling=downsampling_rate
     )
     print("EDA Cleaned")
     # Process clean signal
-    signals, info = nk.eda_process(
-        eda_cleaned, sampling_rate=sampling_rate, method="neurokit"
-    )
+    if downsampling_rate is None:
+        signals, info = nk.eda_process(
+            eda_cleaned, sampling_rate=sampling_rate, method="neurokit"
+        )
+    else:
+        signals, info = nk.eda_process(
+            eda_cleaned, sampling_rate=downsampling_rate, method="neurokit"
+        )
+    
 
     for k in info.keys():
         if isinstance(info[k], np.ndarray):
@@ -514,7 +540,7 @@ def eda_process(eda_raw, sampling_rate=10000, me=True):
     return signals, info
 
 
-def rsp_process(rsp_raw, sampling_rate=10000, method="khodadad2018"):
+def rsp_process(rsp_raw, sampling_rate=10000, downsampling_rate=2500, method="khodadad2018"):
     """
     Parameters
     ----------
@@ -523,6 +549,13 @@ def rsp_process(rsp_raw, sampling_rate=10000, method="khodadad2018"):
     sampling_rate : int
         The sampling frequency of `eda_raw` (in Hz, i.e., samples/second).
         Default to 10000.
+    downsampling_rate : int
+        The sampling frequency to use to downsample the signals (in Hz, i.e., samples/second).
+        If None, the signals are not downsampled.
+        Default to 2500.
+    method : str
+        Method to use for processing.
+        Default to 'khodadad2018'.
 
     Returns
     -------
@@ -546,13 +579,18 @@ def rsp_process(rsp_raw, sampling_rate=10000, method="khodadad2018"):
     # Clean and filter respiratory signal
     print("Cleaning RSP")
     rsp_signal, rsp_cleaned = neuromod_rsp_clean(
-        rsp_signal, sampling_rate=sampling_rate, downsampling=2500
+        rsp_signal, sampling_rate=sampling_rate, downsampling=downsampling_rate
     )
     # Process clean signal
     print("Processing RSP")
-    signals, info = nk.rsp_process(
-        rsp_cleaned, sampling_rate=sampling_rate
-    )
+    if downsampling_rate is None:
+        signals, info = nk.rsp_process(
+            rsp_cleaned, sampling_rate=sampling_rate, method=method
+        )
+    else:
+        signals, info = nk.rsp_process(
+            rsp_cleaned, sampling_rate=downsampling_rate, method=method
+        ) 
     print("RSP Cleaned and processed")
 
     for k in info.keys():

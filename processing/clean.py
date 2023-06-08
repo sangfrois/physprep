@@ -102,7 +102,7 @@ def neuromod_ecg_clean(ecg_signal, sampling_rate=10000.0, method="biopac", me=Fa
     if downsampling is not None:
         ecg_clean = nk.signal_resample(ecg_clean, sampling_rate=sampling_rate, desired_sampling_rate=downsampling)
         ecg_signal = nk.signal_resample(ecg_signal, sampling_rate=sampling_rate, desired_sampling_rate=downsampling)
-
+        
     return ecg_signal, ecg_clean
 
 
