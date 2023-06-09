@@ -89,46 +89,34 @@ def neuromod_bio_process(source, sub, ses, outdir, multi_echo):
         # ppg
         print("******PPG workflow: begin***")
         start_time = timeit.default_timer()
-        try:
-            ppg, ppg_info = ppg_process(ppg_raw, sampling_rate=sampling_rate)
-            bio_info["PPG"] = ppg_info
-            bio_df = pd.concat([bio_df, ppg], axis=1)
-            print(f"***PPG workflow: done in {timeit.default_timer()-start_time} sec***")
-        except:
-            print(f"***PPG workflow: failed after {timeit.default_timer()-start_time} sec***")
+        ppg, ppg_info = ppg_process(ppg_raw, sampling_rate=sampling_rate)
+        bio_info["PPG"] = ppg_info
+        bio_df = pd.concat([bio_df, ppg], axis=1)
+        print(f"***PPG workflow: done in {timeit.default_timer()-start_time} sec***")
 
         #  ecg
         print("***ECG workflow: begin***")
         start_time = timeit.default_timer()
-        try:
-            ecg, ecg_info = ecg_process(ecg_raw, sampling_rate=sampling_rate, me=multi_echo)
-            bio_info["ECG"] = ecg_info
-            bio_df = pd.concat([bio_df, ecg], axis=1)
-            print(f"***ECG workflow: done in {timeit.default_timer()-start_time} sec***")
-        except:
-            print(f"***ECG workflow: failed after {timeit.default_timer()-start_time} sec***")
+        ecg, ecg_info = ecg_process(ecg_raw, sampling_rate=sampling_rate, me=multi_echo)
+        bio_info["ECG"] = ecg_info
+        bio_df = pd.concat([bio_df, ecg], axis=1)
+        print(f"***ECG workflow: done in {timeit.default_timer()-start_time} sec***")
 
         #  rsp
         print("***Respiration workflow: begin***")
         start_time = timeit.default_timer()
-        try:
-            rsp, rsp_info = rsp_process(rsp_raw, sampling_rate=sampling_rate, method="khodadad2018")
-            bio_info["RSP"] = rsp_info
-            bio_df = pd.concat([bio_df, rsp], axis=1)
-            print(f"***Respiration workflow: done in {timeit.default_timer()-start_time} sec***")
-        except:
-            print(f"***RSP workflow: failed after {timeit.default_timer()-start_time} sec***")
+        rsp, rsp_info = rsp_process(rsp_raw, sampling_rate=sampling_rate, method="khodadad2018")
+        bio_info["RSP"] = rsp_info
+        bio_df = pd.concat([bio_df, rsp], axis=1)
+        print(f"***Respiration workflow: done in {timeit.default_timer()-start_time} sec***")
 
         #  eda
         print("***Electrodermal activity workflow: begin***")
         start_time = timeit.default_timer()
-        try:
-            eda, eda_info = eda_process(eda_raw, sampling_rate, me=multi_echo)
-            bio_info["EDA"] = eda_info
-            bio_df = pd.concat([bio_df, eda], axis=1)
-            print(f"***Electrodermal activity workflow: done in {timeit.default_timer()-start_time} sec***")
-        except:
-            print(f"***EDA workflow: failed after {timeit.default_timer()-start_time} sec***")
+        eda, eda_info = eda_process(eda_raw, sampling_rate, me=multi_echo)
+        bio_info["EDA"] = eda_info
+        bio_df = pd.concat([bio_df, eda], axis=1)
+        print(f"***Electrodermal activity workflow: done in {timeit.default_timer()-start_time} sec***")
 
         # return a dataframe
         bio_df["time"] = df["time"]
@@ -413,14 +401,20 @@ def ppg_process(ppg_raw, sampling_rate=10000, downsampling_rate=2500):
     )
     print("PPG Cleaned")
     # Process clean signal
-    if downsampling_rate is None:
-        signals, info = process_cardiac(
-            ppg_signal, ppg_cleaned, sampling_rate=sampling_rate, data_type="PPG"
-        )
-    else:
-        signals, info = process_cardiac(
-            ppg_signal, ppg_cleaned, sampling_rate=downsampling_rate, data_type="PPG"
-        )
+    try:
+        if downsampling_rate is None:
+            signals, info = process_cardiac(
+                ppg_signal, ppg_cleaned, sampling_rate=sampling_rate, data_type="PPG"
+            )
+        else:
+            signals, info = process_cardiac(
+                ppg_signal, ppg_cleaned, sampling_rate=downsampling_rate, data_type="PPG"
+            )
+        info["Processed"] = True
+    except:
+        print("ERROR in PPG processing procedure")
+        signals = pd.DataFrame({"PPG_Raw": ppg_signal, "PPG_Clean": ppg_cleaned})
+        info = {"Processed": False}
 
     return signals, info
 
@@ -469,14 +463,20 @@ def ecg_process(ecg_raw, sampling_rate=10000, downsampling_rate=2500, method="bo
     )
     print("ECG Cleaned")
     # Process clean signal
-    if downsampling_rate is None:
-        signals, info = process_cardiac(
-            ecg_signal, ecg_cleaned, sampling_rate=sampling_rate, data_type="ECG"
-        )
-    else:
-        signals, info = process_cardiac(
-            ecg_signal, ecg_cleaned, sampling_rate=downsampling_rate, data_type="ECG"
-        )
+    try:
+        if downsampling_rate is None:
+            signals, info = process_cardiac(
+                ecg_signal, ecg_cleaned, sampling_rate=sampling_rate, data_type="ECG"
+            )
+        else:
+            signals, info = process_cardiac(
+                ecg_signal, ecg_cleaned, sampling_rate=downsampling_rate, data_type="ECG"
+            )
+        info["Processed"] = True
+    except:
+        print("ERROR in ECG processing procedure")
+        signals = pd.DataFrame({"ECG_Raw": ecg_signal, "ECG_Clean": ecg_cleaned})
+        info = {"Processed": False}
 
     return signals, info
 
@@ -523,16 +523,21 @@ def eda_process(eda_raw, sampling_rate=10000, downsampling_rate=2500, me=True):
     )
     print("EDA Cleaned")
     # Process clean signal
-    if downsampling_rate is None:
-        signals, info = nk.eda_process(
-            eda_cleaned, sampling_rate=sampling_rate, method="neurokit"
-        )
-    else:
-        signals, info = nk.eda_process(
-            eda_cleaned, sampling_rate=downsampling_rate, method="neurokit"
-        )
+    try:
+        if downsampling_rate is None:
+            signals, info = nk.eda_process(
+               eda_cleaned, sampling_rate=sampling_rate, method="neurokit"
+            )
+        else:
+            signals, info = nk.eda_process(
+                eda_cleaned, sampling_rate=downsampling_rate, method="neurokit"
+            )
+        info["Processed"] = True
+    except:
+        print("ERROR in EDA processing procedure")
+        signals = pd.DataFrame({"EDA_Raw": eda_signal, "EDA_Clean": eda_cleaned})
+        info = {"Processed": False}
     
-
     for k in info.keys():
         if isinstance(info[k], np.ndarray):
             info[k] = info[k].tolist()
@@ -583,15 +588,21 @@ def rsp_process(rsp_raw, sampling_rate=10000, downsampling_rate=2500, method="kh
     )
     # Process clean signal
     print("Processing RSP")
-    if downsampling_rate is None:
-        signals, info = nk.rsp_process(
-            rsp_cleaned, sampling_rate=sampling_rate, method=method
-        )
-    else:
-        signals, info = nk.rsp_process(
-            rsp_cleaned, sampling_rate=downsampling_rate, method=method
-        ) 
-    print("RSP Cleaned and processed")
+    try:
+        if downsampling_rate is None:
+            signals, info = nk.rsp_process(
+                rsp_cleaned, sampling_rate=sampling_rate, method=method
+            )
+        else:
+            signals, info = nk.rsp_process(
+                rsp_cleaned, sampling_rate=downsampling_rate, method=method
+            ) 
+        info["Processed"] = True
+        print("RSP Cleaned and processed")
+    except:
+        print("ERROR in EDA processing procedure")
+        signals = pd.DataFrame({"EDA_Raw": eda_signal, "EDA_Clean": eda_cleaned})
+        info = {"Processed": False}
 
     for k in info.keys():
         if isinstance(info[k], np.ndarray):
