@@ -121,9 +121,20 @@ def neuromod_bio_process(source, sub, ses, outdir, multi_echo):
         # return a dataframe
         bio_df["time"] = df["time"]
 
+        tmp = pd.read_csv(os.path.join(outdir, sub, ses, f"{filenames_tsv[idx]}.tsv.gz"), sep="\t")
+        tmp["EDA_Raw"] = bio_df["EDA_Raw"]
+        tmp["RSP_Raw"] = bio_df["RSP_Raw"]
+
         print("***Saving processed biosignals: begin***")
         start_time = timeit.default_timer()
         filename = Path(source)
+        tmp.to_csv(
+            os.path.join(
+                outdir, sub, ses, f"{sub}_{ses}_{run}_physio.tsv.gz"
+            ),
+            sep="\t",
+            index=False
+            )
         bio_df.to_csv(
             os.path.join(
                 outdir, sub, ses, f"{sub}_{ses}_{run}_physio.tsv.gz"
@@ -532,6 +543,7 @@ def eda_process(eda_raw, sampling_rate=10000, downsampling_rate=2500, me=True):
             signals, info = nk.eda_process(
                 eda_cleaned, sampling_rate=downsampling_rate, method="neurokit"
             )
+        signals['EDA_Raw'] = eda_signal
         info["Processed"] = True
     except:
         print("ERROR in EDA processing procedure")
@@ -597,11 +609,12 @@ def rsp_process(rsp_raw, sampling_rate=10000, downsampling_rate=2500, method="kh
             signals, info = nk.rsp_process(
                 rsp_cleaned, sampling_rate=downsampling_rate, method=method
             ) 
+        signals['RSP_Raw'] = rsp_signal
         info["Processed"] = True
         print("RSP Cleaned and processed")
     except:
-        print("ERROR in EDA processing procedure")
-        signals = pd.DataFrame({"EDA_Raw": eda_signal, "EDA_Clean": eda_cleaned})
+        print("ERROR in RSP processing procedure")
+        signals = pd.DataFrame({"RSP_Raw": rsp_signal, "RSP_Clean": rsp_cleaned})
         info = {"Processed": False}
 
     for k in info.keys():
